@@ -18,4 +18,6 @@ public class HomePage extends BasePage {
     public boolean isHomePageLoaded() {
         return page.title().contains("Automation Exercise");
     }
+    
+    
 }
