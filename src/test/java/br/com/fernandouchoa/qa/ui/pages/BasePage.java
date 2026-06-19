@@ -4,12 +4,18 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+
 public abstract class BasePage {
 
     protected final Page page;
+    protected final String baseUrl;
+    
+    
 
     protected BasePage(Page page) {
         this.page = page;
+        this.baseUrl = EnvironmentManager.getBaseUrl();
     }
 
     protected void navigateTo(String url) {

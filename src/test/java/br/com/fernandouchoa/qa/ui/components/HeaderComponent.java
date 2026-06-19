@@ -1,6 +1,7 @@
 package br.com.fernandouchoa.qa.ui.components;
 
 import com.microsoft.playwright.Locator;
+import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
 import com.microsoft.playwright.Page;
 
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
@@ -35,6 +36,12 @@ public class HeaderComponent {
 
     public void clickCart() {
         cartLink.click();
+    }
+    
+    public ProductsPage goToProductsPage() {
+        productsLink.click();
+
+        return new ProductsPage(page);
     }
     
     
