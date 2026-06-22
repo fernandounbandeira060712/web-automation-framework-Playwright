@@ -6,6 +6,7 @@ import br.com.fernandouchoa.qa.model.User;
 import br.com.fernandouchoa.qa.ui.pages.AccountPage;
 import br.com.fernandouchoa.qa.ui.pages.HomePage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
+import br.com.fernandouchoa.qa.ui.pages.ProductDetailsPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
 import br.com.fernandouchoa.qa.utils.AssertUtils;
 import br.com.fernandouchoa.qa.utils.TestDataManager;
@@ -110,6 +111,34 @@ public class AutomationExerciseHomeTest extends BaseTest {
         AssertUtils.assertTrue(
                 homePage.isLoaded(),
                 "Home Page não foi carregada."
+        );
+    }
+    
+    @Test
+    public void deveVisualizarDetalhesDoProdutoComSucesso() {
+
+        HomePage homePage = new HomePage(page);
+
+        homePage.open();
+
+        ProductDetailsPage productDetailsPage =
+                homePage.header()
+                        .goToProductsPage()
+                        .viewProductById("1");
+
+        AssertUtils.assertTrue(
+                productDetailsPage.isLoaded(),
+                "Página de detalhes do produto não foi carregada."
+        );
+
+        AssertUtils.assertTrue(
+                !productDetailsPage.getProductName().isBlank(),
+                "Nome do produto não foi exibido."
+        );
+
+        AssertUtils.assertTrue(
+                !productDetailsPage.getProductPrice().isBlank(),
+                "Preço do produto não foi exibido."
         );
     }
 }

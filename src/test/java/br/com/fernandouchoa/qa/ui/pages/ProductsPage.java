@@ -3,6 +3,8 @@ package br.com.fernandouchoa.qa.ui.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+
 public class ProductsPage extends BasePage {
 
     private final Locator productsSection;
@@ -38,12 +40,11 @@ public class ProductsPage extends BasePage {
         return productCards.count();
     }
 
-    /*
     public ProductDetailsPage viewProductById(String productId) {
-        page.locator("a[href='/product_details/" + productId + "']").click();
+        page.navigate(EnvironmentManager.getBaseUrl() + "product_details/" + productId);
+
         return new ProductDetailsPage(page);
     }
-    */
 
     public ProductsPage addProductToCartById(String productId) {
         page.locator("a[data-product-id='" + productId + "']").first().click();
