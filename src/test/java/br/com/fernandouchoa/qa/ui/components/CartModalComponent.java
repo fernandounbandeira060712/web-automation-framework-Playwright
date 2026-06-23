@@ -13,7 +13,7 @@ public class CartModalComponent {
     private final Locator modal;
     private final Locator continueShoppingButton;
     private final Locator viewCartButton;
-
+    
     public CartModalComponent(Page page) {
 
         this.page = page;
@@ -25,7 +25,7 @@ public class CartModalComponent {
                 page.locator(".close-modal");
 
         this.viewCartButton =
-                page.locator("a[href='/view_cart']");
+                page.locator("#cartModal a[href='/view_cart']");
     }
 
     public CartModalComponent addProductToCartById(String productId) {
@@ -45,7 +45,6 @@ public class CartModalComponent {
     }
 
     public void continueShopping() {
-
         continueShoppingButton.click();
     }
 
@@ -55,4 +54,4 @@ public class CartModalComponent {
 
         return new CartPage(page);
     }
-}
+ }

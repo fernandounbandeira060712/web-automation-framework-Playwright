@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import br.com.fernandouchoa.qa.model.User;
 import br.com.fernandouchoa.qa.ui.components.CartModalComponent;
 import br.com.fernandouchoa.qa.ui.pages.AccountPage;
+import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.HomePage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductDetailsPage;
@@ -159,6 +160,30 @@ public class AutomationExerciseHomeTest extends BaseTest {
         AssertUtils.assertTrue(
                 cartModal.isDisplayed(),
                 "Modal de produto adicionado não foi exibido."
+        );
+    }
+    
+    @Test
+    public void deveVisualizarCarrinhoComProdutoAdicionado() {
+
+        HomePage homePage = new HomePage(page);
+
+        homePage.open();
+
+        CartPage cartPage =
+                homePage.header()
+                        .goToProductsPage()
+                        .addProductToCartById("1")
+                        .viewCart();
+
+        AssertUtils.assertTrue(
+                cartPage.isLoaded(),
+                "Página do carrinho não foi carregada."
+        );
+
+        AssertUtils.assertTrue(
+                cartPage.hasProducts(),
+                "Nenhum produto foi encontrado no carrinho."
         );
     }
 }
