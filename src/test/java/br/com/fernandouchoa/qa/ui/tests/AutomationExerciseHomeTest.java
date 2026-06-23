@@ -186,4 +186,51 @@ public class AutomationExerciseHomeTest extends BaseTest {
                 "Nenhum produto foi encontrado no carrinho."
         );
     }
+    
+    @Test
+    public void deveRemoverProdutoDoCarrinho() {
+
+        HomePage homePage = new HomePage(page);
+
+        homePage.open();
+
+        CartPage cartPage =
+                homePage.header()
+                        .goToProductsPage()
+                        .addProductToCartById("1")
+                        .viewCart();
+
+        cartPage.removeFirstProduct();
+
+        AssertUtils.assertTrue(
+                cartPage.isEmpty(),
+                "Carrinho não está vazio."
+        );
+    }
+    
+    @Test
+    public void deveRemoverProdutoDoCarrinhoComSucesso() {
+
+        HomePage homePage = new HomePage(page);
+
+        homePage.open();
+
+        CartPage cartPage =
+                homePage.header()
+                        .goToProductsPage()
+                        .addProductToCartById("1")
+                        .viewCart();
+
+        AssertUtils.assertTrue(
+                cartPage.hasProducts(),
+                "Nenhum produto foi encontrado no carrinho."
+        );
+
+        cartPage.removeFirstProduct();
+
+        AssertUtils.assertTrue(
+                cartPage.isEmpty(),
+                "Carrinho não ficou vazio após remover o produto."
+        );
+    }
 }

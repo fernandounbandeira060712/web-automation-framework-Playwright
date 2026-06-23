@@ -12,14 +12,9 @@ public class CartPage extends BasePage {
     public CartPage(Page page) {
         super(page);
 
-        this.cartTable =
-                page.locator("#cart_info");
-
-        this.cartItems =
-                page.locator(".cart_info tbody tr");
-
-        this.deleteButtons =
-                page.locator(".cart_quantity_delete");
+        this.cartTable = page.locator("#cart_info");
+        this.cartItems = page.locator("#cart_info_table tbody tr");
+        this.deleteButtons = page.locator(".cart_quantity_delete");
     }
 
     public boolean isLoaded() {
@@ -32,6 +27,7 @@ public class CartPage extends BasePage {
 
     public CartPage removeFirstProduct() {
         deleteButtons.first().click();
+        page.waitForTimeout(1000);
         return this;
     }
 
