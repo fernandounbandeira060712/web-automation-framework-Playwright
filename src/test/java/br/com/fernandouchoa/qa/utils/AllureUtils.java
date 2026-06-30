@@ -62,4 +62,19 @@ public final class AllureUtils {
                     }
                 });
     }
+    
+    public static void attachFile(String name, Path filePath, String type) {
+
+        try {
+            if (Files.exists(filePath)) {
+                Allure.addAttachment(
+                        name,
+                        type,
+                        Files.newInputStream(filePath),
+                        filePath.toString()
+                );
+            }
+        } catch (Exception ignored) {
+        }
+    }
 }

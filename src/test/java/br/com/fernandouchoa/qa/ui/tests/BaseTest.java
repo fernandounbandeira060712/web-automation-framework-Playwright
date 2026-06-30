@@ -4,9 +4,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import br.com.fernandouchoa.qa.core.extensions.AllureReportExtension;
+
 import com.microsoft.playwright.Page;
 
+import br.com.fernandouchoa.qa.core.extensions.AllureReportExtension;
 import br.com.fernandouchoa.qa.core.factory.PlaywrightFactory;
 import br.com.fernandouchoa.qa.utils.AllureUtils;
 
@@ -14,7 +15,6 @@ import br.com.fernandouchoa.qa.utils.AllureUtils;
 public class BaseTest {
 
     protected Page page;
-
     private static boolean cleaned = false;
 
     @BeforeEach

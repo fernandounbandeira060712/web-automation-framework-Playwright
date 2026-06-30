@@ -7,6 +7,9 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import java.nio.file.Paths;
+import com.microsoft.playwright.Tracing;
+
 
 public final class PlaywrightFactory {
 
@@ -23,8 +26,18 @@ public final class PlaywrightFactory {
 
         Browser browser = launchBrowser(playwright, options);
 
-        BrowserContext context = browser.newContext();
-        context.setDefaultTimeout(EnvironmentManager.getTimeout());
+        BrowserContext context =
+                browser.newContext(
+                        new Browser.NewContextOptions()
+                                .setRecordVideoDir(Paths.get("target/videos"))
+                );
+        
+        context.tracing().start(
+                new Tracing.StartOptions()
+                        .setScreenshots(true)
+                        .setSnapshots(true)
+                        .setSources(true)
+        );
 
         Page page = context.newPage();
 
