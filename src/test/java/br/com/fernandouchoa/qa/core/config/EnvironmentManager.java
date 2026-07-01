@@ -40,7 +40,16 @@ public final class EnvironmentManager {
     }
 
     public static boolean isHeadless() {
-        return Boolean.parseBoolean(properties.getProperty("headless", "true"));
+
+        boolean isCi =
+                "true".equalsIgnoreCase(System.getenv("CI"))
+                        || "true".equalsIgnoreCase(System.getenv("GITHUB_ACTIONS"));
+
+        if (isCi) {
+            return true;
+        }
+
+        return Boolean.parseBoolean(properties.getProperty("headless", "false"));
     }
 
     public static int getTimeout() {
