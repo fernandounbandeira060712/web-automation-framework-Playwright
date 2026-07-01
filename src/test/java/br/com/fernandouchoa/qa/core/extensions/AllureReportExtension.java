@@ -14,13 +14,21 @@ public class AllureReportExtension implements AfterAllCallback {
     @Override
     public void afterAll(ExtensionContext context) throws IOException {
 
-        if (REPORT_ALREADY_OPENED.compareAndSet(false, true)) {
+        if (isCiEnvironment()) {
+            return;
+        }
 
+        if (REPORT_ALREADY_OPENED.compareAndSet(false, true)) {
             new ProcessBuilder(
                     "cmd",
                     "/c",
                     "allure serve target/allure-results"
             ).start();
         }
+    }
+
+    private boolean isCiEnvironment() {
+        return "true".equalsIgnoreCase(System.getenv("CI"))
+                || "true".equalsIgnoreCase(System.getenv("GITHUB_ACTIONS"));
     }
 }
