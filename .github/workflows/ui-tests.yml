@@ -9,10 +9,8 @@ on:
     branches:
       - main
 
-  workflow_dispatch:
-
 jobs:
-  quality-gates:
+  ui-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,11 +24,25 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Build Project
-        run: mvn clean test -DskipTests
-
       - name: Static Code Analysis - PMD
         run: mvn pmd:check
 
-      - name: Validate Maven Tests Compilation
-        run: mvn test-compile
+      - name: Install Playwright Browsers
+        run: mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+
+      - name: Execute UI Tests
+        run: mvn clean test
+
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: target/allure-results
+
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
