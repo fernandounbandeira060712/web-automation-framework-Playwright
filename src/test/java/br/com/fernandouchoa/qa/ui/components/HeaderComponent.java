@@ -1,9 +1,9 @@
 package br.com.fernandouchoa.qa.ui.components;
 
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitUntilState;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+import br.com.fernandouchoa.qa.ui.locators.HeaderLocators;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
@@ -20,40 +20,24 @@ public class HeaderComponent {
 
     @Step("Acessar página de Login")
     public LoginPage goToLoginPage() {
-        page.navigate(
-                EnvironmentManager.getBaseUrl() + "login",
-                new Page.NavigateOptions()
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
-        WaitUtils.waitForPageLoad(page);
-
+        navigateTo(HeaderLocators.LOGIN_PATH);
         return new LoginPage(page);
     }
 
     @Step("Acessar página de Produtos")
     public ProductsPage goToProductsPage() {
-        page.navigate(
-                EnvironmentManager.getBaseUrl() + "products",
-                new Page.NavigateOptions()
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
-        WaitUtils.waitForPageLoad(page);
-
+        navigateTo(HeaderLocators.PRODUCTS_PATH);
         return new ProductsPage(page);
     }
 
     @Step("Acessar página do Carrinho")
     public CartPage goToCartPage() {
-        page.navigate(
-                EnvironmentManager.getBaseUrl() + "view_cart",
-                new Page.NavigateOptions()
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
-        WaitUtils.waitForPageLoad(page);
-
+        navigateTo(HeaderLocators.CART_PATH);
         return new CartPage(page);
+    }
+
+    private void navigateTo(String path) {
+        page.navigate(EnvironmentManager.getBaseUrl() + path);
+        WaitUtils.waitForPageLoad(page);
     }
 }

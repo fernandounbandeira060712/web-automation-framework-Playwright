@@ -3,6 +3,7 @@ package br.com.fernandouchoa.qa.ui.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 
+import br.com.fernandouchoa.qa.ui.locators.ProductDetailsLocators;
 import io.qameta.allure.Step;
 
 public class ProductDetailsPage extends BasePage {
@@ -19,25 +20,25 @@ public class ProductDetailsPage extends BasePage {
         super(page);
 
         this.productInformation =
-                page.locator(".product-information");
+                locator(ProductDetailsLocators.PRODUCT_INFORMATION);
 
         this.productName =
-                page.locator(".product-information h2");
+                locator(ProductDetailsLocators.PRODUCT_NAME);
 
         this.productCategory =
-                page.locator(".product-information p").first();
+                locator(ProductDetailsLocators.PRODUCT_CATEGORY).first();
 
         this.productPrice =
-                page.locator(".product-information span span");
+                locator(ProductDetailsLocators.PRODUCT_PRICE);
 
         this.productAvailability =
-                page.locator(".product-information p:has-text('Availability')");
+                locator(ProductDetailsLocators.PRODUCT_AVAILABILITY);
 
         this.addToCartButton =
-                page.locator("button.cart");
+                locator(ProductDetailsLocators.ADD_TO_CART_BUTTON);
 
         this.quantityInput =
-                page.locator("#quantity");
+                locator(ProductDetailsLocators.QUANTITY_INPUT);
     }
 
     @Step("Validar se a página de detalhes do produto foi carregada")

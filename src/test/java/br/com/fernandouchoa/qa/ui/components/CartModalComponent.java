@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
+import br.com.fernandouchoa.qa.ui.locators.CartModalLocators;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.utils.WaitUtils;
 import io.qameta.allure.Step;
@@ -20,13 +21,13 @@ public class CartModalComponent {
         this.page = page;
 
         this.modal =
-                page.locator("#cartModal");
+                page.locator(CartModalLocators.MODAL);
 
         this.continueShoppingButton =
-                page.locator(".close-modal");
+                page.locator(CartModalLocators.CONTINUE_SHOPPING_BUTTON);
 
         this.viewCartButton =
-                page.locator("#cartModal a[href='/view_cart']");
+                page.locator(CartModalLocators.VIEW_CART_BUTTON);
     }
 
     @Step("Validar se o modal de produto adicionado foi exibido")
@@ -47,7 +48,8 @@ public class CartModalComponent {
 
     @Step("Aguardar modal de produto adicionado")
     public CartModalComponent waitUntilDisplayed() {
-        page.waitForSelector("#cartModal",
+        page.waitForSelector(
+                CartModalLocators.MODAL,
                 new Page.WaitForSelectorOptions()
                         .setState(WaitForSelectorState.VISIBLE));
 
