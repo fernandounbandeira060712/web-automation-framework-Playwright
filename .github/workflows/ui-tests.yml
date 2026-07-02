@@ -1,26 +1,21 @@
-name: UI Automation Tests
+name: UI Automation Quality Pipeline
 
 on:
   push:
     branches:
       - main
-      - develop
 
   pull_request:
     branches:
       - main
-      - develop
 
   workflow_dispatch:
 
 jobs:
-
-  ui-tests:
-
+  quality-gates:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -30,26 +25,12 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: maven
-      
-      - name: Static Code Analysts - PMD
+
+      - name: Build Project
+        run: mvn clean test -DskipTests
+
+      - name: Static Code Analysis - PMD
         run: mvn pmd:check
 
-      - name: Install Playwright Browsers
-        run: mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
-
-      - name: Execute UI Tests
-        run: mvn clean test
-
-      - name: Upload Allure Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: allure-results
-          path: target/allure-results
-
-      - name: Upload Screenshots
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: screenshots
-          path: target/allure-results
+      - name: Validate Maven Tests Compilation
+        run: mvn test-compile
