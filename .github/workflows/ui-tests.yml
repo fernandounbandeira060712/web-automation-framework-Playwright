@@ -30,6 +30,9 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: maven
+      
+      - name: Static Code Analysts - PMD
+        run: mvn pmd:check
 
       - name: Install Playwright Browsers
         run: mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
