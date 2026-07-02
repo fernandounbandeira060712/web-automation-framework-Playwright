@@ -15,7 +15,6 @@ public class LoginPage extends BasePage {
     private final Locator loginErrorMessage;
 
     public LoginPage(Page page) {
-
         super(page);
 
         this.emailField =
@@ -33,53 +32,51 @@ public class LoginPage extends BasePage {
 
     @Step("Validar se página de Login foi carregada")
     public boolean isLoginPageLoaded() {
-        return page.url().contains("/login");
+        return getCurrentUrl().contains("/login");
     }
 
     @Step("Preencher email do usuário")
     public LoginPage fillEmail(String email) {
-        emailField.fill(email);
+        fill(emailField, email);
         return this;
     }
 
     @Step("Preencher senha do usuário")
     public LoginPage fillPassword(String password) {
-        passwordField.fill(password);
+        fill(passwordField, password);
         return this;
     }
 
     @Step("Clicar no botão Login")
     public LoginPage clickLogin() {
-        loginButton.click();
+        click(loginButton);
         return this;
     }
 
     @Step("Realizar tentativa de login com usuário inválido")
     public LoginPage login(User user) {
-
         Allure.parameter("Email utilizado", user.getEmail());
 
-        emailField.fill(user.getEmail());
-        passwordField.fill(user.getPassword());
-        loginButton.click();
+        fillEmail(user.getEmail());
+        fillPassword(user.getPassword());
+        clickLogin();
 
         return this;
     }
 
     @Step("Realizar login com usuário válido")
     public AccountPage loginSuccessfully(User user) {
-
         Allure.parameter("Email utilizado", user.getEmail());
 
-        emailField.fill(user.getEmail());
-        passwordField.fill(user.getPassword());
-        loginButton.click();
+        fillEmail(user.getEmail());
+        fillPassword(user.getPassword());
+        click(loginButton);
 
         return new AccountPage(page);
     }
 
     @Step("Validar mensagem de login inválido")
     public boolean isInvalidLoginMessageDisplayed() {
-        return loginErrorMessage.isVisible();
+        return isVisible(loginErrorMessage);
     }
 }

@@ -11,7 +11,6 @@ public class AccountPage extends BasePage {
 
     private final Locator loggedUser;
 
-    
     public AccountPage(Page page) {
         super(page);
 
@@ -21,7 +20,7 @@ public class AccountPage extends BasePage {
 
     @Step("Validar se usuário está logado")
     public boolean isLoaded() {
-        return loggedUser.isVisible();
+        return isVisible(loggedUser);
     }
 
     @Step("Realizar logout do usuário")

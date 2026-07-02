@@ -2,9 +2,9 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.LoadState;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+import br.com.fernandouchoa.qa.utils.WaitUtils;
 
 public abstract class BasePage {
 
@@ -22,26 +22,27 @@ public abstract class BasePage {
     }
 
     protected void click(Locator locator) {
-        locator.waitFor();
-        locator.click();
+        WaitUtils.click(locator);
     }
 
     protected void fill(Locator locator, String value) {
-        locator.waitFor();
-        locator.fill(value);
+        WaitUtils.fill(locator, value);
     }
 
     protected String getText(Locator locator) {
-        locator.waitFor();
-        return locator.innerText();
+        return WaitUtils.getText(locator);
     }
 
     protected boolean isVisible(Locator locator) {
-        return locator.isVisible();
+        return WaitUtils.isVisible(locator);
     }
 
     protected void waitForPageLoad() {
-        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+        WaitUtils.waitForPageLoad(page);
+    }
+
+    protected void waitForNetworkIdle() {
+        WaitUtils.waitForNetworkIdle(page);
     }
 
     protected String getTitle() {

@@ -26,9 +26,9 @@ public class CheckoutPage extends BasePage {
 
     @Step("Validar se a página de checkout foi carregada")
     public boolean isLoaded() {
-        return page.url().contains("/checkout")
-                && addressDetails.isVisible()
-                && reviewOrder.isVisible();
+        return getCurrentUrl().contains("/checkout")
+                && isVisible(addressDetails)
+                && isVisible(reviewOrder);
     }
 
     @Step("Validar se existem produtos na revisão do pedido")

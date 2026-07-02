@@ -42,38 +42,38 @@ public class ProductDetailsPage extends BasePage {
 
     @Step("Validar se a página de detalhes do produto foi carregada")
     public boolean isLoaded() {
-        return productInformation.isVisible();
+        return isVisible(productInformation);
     }
 
     @Step("Capturar nome do produto")
     public String getProductName() {
-        return productName.innerText();
+        return getText(productName);
     }
 
     @Step("Capturar categoria do produto")
     public String getProductCategory() {
-        return productCategory.innerText();
+        return getText(productCategory);
     }
 
     @Step("Capturar preço do produto")
     public String getProductPrice() {
-        return productPrice.innerText();
+        return getText(productPrice);
     }
 
     @Step("Validar disponibilidade do produto")
     public boolean isAvailabilityDisplayed() {
-        return productAvailability.isVisible();
+        return isVisible(productAvailability);
     }
 
-    @Step("Informar quantidade do produto: {quantity}")
+    @Step("Informar quantidade do produto")
     public ProductDetailsPage setQuantity(String quantity) {
-        quantityInput.fill(quantity);
+        fill(quantityInput, quantity);
         return this;
     }
 
     @Step("Adicionar produto ao carrinho pela página de detalhes")
     public ProductDetailsPage addToCart() {
-        addToCartButton.click();
+        click(addToCartButton);
         return this;
     }
 }

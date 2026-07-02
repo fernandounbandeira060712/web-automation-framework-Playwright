@@ -30,7 +30,7 @@ public class CartPage extends BasePage {
 
     @Step("Validar se a página do carrinho foi carregada")
     public boolean isLoaded() {
-        return cartTable.isVisible();
+        return isVisible(cartTable);
     }
 
     @Step("Validar se existem produtos no carrinho")
@@ -40,7 +40,7 @@ public class CartPage extends BasePage {
 
     @Step("Remover o primeiro produto do carrinho")
     public CartPage removeFirstProduct() {
-        deleteButtons.first().click();
+        click(deleteButtons.first());
         page.waitForTimeout(1000);
         return this;
     }
@@ -52,9 +52,7 @@ public class CartPage extends BasePage {
 
     @Step("Prosseguir para o checkout")
     public CheckoutPage proceedToCheckout() {
-
-        proceedToCheckoutButton.click();
-
+        click(proceedToCheckoutButton);
         return new CheckoutPage(page);
     }
 }

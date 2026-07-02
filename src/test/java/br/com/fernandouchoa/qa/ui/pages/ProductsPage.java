@@ -31,42 +31,21 @@ public class ProductsPage extends BasePage {
         this.productCards =
                 page.locator(".product-image-wrapper");
     }
-    
-    @Step("Adicionar produto ao carrinho")
-    public CartModalComponent addProductToCartById(String productId) {
-
-        Allure.parameter("ID do produto", productId);
-
-        page.locator(".productinfo a[data-product-id='" + productId + "']")
-                .click();
-
-        page.waitForSelector("#cartModal",
-                new Page.WaitForSelectorOptions()
-                        .setState(WaitForSelectorState.VISIBLE));
-
-        return new CartModalComponent(page);
-    }
-    
-    @Step("Visualizar detalhes do produto")
-    public ProductDetailsPage viewProductById(String productId) {
-
-        Allure.parameter("ID do produto", productId);
-
-        page.navigate(EnvironmentManager.getBaseUrl() + "product_details/" + productId);
-
-        return new ProductDetailsPage(page);
-    }
 
     @Step("Validar se a página de produtos foi carregada")
     public boolean isLoaded() {
-        return productsSection.isVisible();
+        return isVisible(productsSection);
     }
 
-    @Step("Pesquisar produto: {productName}")
+    @Step("Pesquisar produto")
     public ProductsPage searchProduct(String productName) {
-        searchInput.fill(productName);
-        searchButton.click();
+        Allure.parameter("Produto pesquisado", productName);
+
+        fill(searchInput, productName);
+        click(searchButton);
+
         page.waitForSelector(".product-image-wrapper");
+
         return this;
     }
 
@@ -80,4 +59,28 @@ public class ProductsPage extends BasePage {
         return productCards.count();
     }
 
+    @Step("Visualizar detalhes do produto")
+    public ProductDetailsPage viewProductById(String productId) {
+        Allure.parameter("ID do produto", productId);
+
+        page.navigate(EnvironmentManager.getBaseUrl() + "product_details/" + productId);
+
+        return new ProductDetailsPage(page);
+    }
+
+    @Step("Adicionar produto ao carrinho")
+    public CartModalComponent addProductToCartById(String productId) {
+        Allure.parameter("ID do produto", productId);
+
+        Locator addToCartButton =
+                page.locator(".productinfo a[data-product-id='" + productId + "']");
+
+        click(addToCartButton);
+
+        page.waitForSelector("#cartModal",
+                new Page.WaitForSelectorOptions()
+                        .setState(WaitForSelectorState.VISIBLE));
+
+        return new CartModalComponent(page);
+    }
 }

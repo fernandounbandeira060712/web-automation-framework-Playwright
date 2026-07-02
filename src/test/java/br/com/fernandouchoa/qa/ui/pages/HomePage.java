@@ -61,10 +61,9 @@ public class HomePage extends BasePage {
 
     @Step("Validar se a Home Page foi carregada")
     public boolean isLoaded() {
-
-        return slider.isVisible()
-                && categorySection.isVisible()
-                && brandsSection.isVisible()
-                && featuredProducts.isVisible();
+        return isVisible(slider)
+                && isVisible(categorySection)
+                && isVisible(brandsSection)
+                && isVisible(featuredProducts);
     }
 }
