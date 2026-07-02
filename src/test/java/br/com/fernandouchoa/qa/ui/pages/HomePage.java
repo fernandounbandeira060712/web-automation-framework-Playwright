@@ -2,10 +2,9 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitUntilState;
 
-import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.ui.components.HeaderComponent;
+import br.com.fernandouchoa.qa.ui.locators.HomeLocators;
 import io.qameta.allure.Step;
 
 public class HomePage extends BasePage {
@@ -18,39 +17,19 @@ public class HomePage extends BasePage {
     private final Locator featuredProducts;
 
     public HomePage(Page page) {
-
         super(page);
 
-        this.header =
-                new HeaderComponent(page);
+        this.header = new HeaderComponent(page);
 
-        this.slider =
-                page.locator("#slider");
-
-        this.categorySection =
-                page.locator(".category-products");
-
-        this.brandsSection =
-                page.locator(".brands_products");
-
-        this.featuredProducts =
-                page.locator(".features_items");
+        this.slider = locator(HomeLocators.SLIDER);
+        this.categorySection = locator(HomeLocators.CATEGORY_SECTION);
+        this.brandsSection = locator(HomeLocators.BRANDS_SECTION);
+        this.featuredProducts = locator(HomeLocators.FEATURED_PRODUCTS);
     }
 
     @Step("Acessar a Home Page")
     public HomePage open() {
-
-        try {
-            page.navigate(
-                    EnvironmentManager.getBaseUrl(),
-                    new Page.NavigateOptions()
-                            .setTimeout(15000)
-                            .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-            );
-        } catch (Exception exception) {
-            page.evaluate("window.stop()");
-        }
-
+        navigateTo(baseUrl);
         return this;
     }
 

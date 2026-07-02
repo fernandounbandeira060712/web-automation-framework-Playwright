@@ -2,6 +2,7 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitUntilState;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.utils.WaitUtils;
@@ -16,9 +17,30 @@ public abstract class BasePage {
         this.baseUrl = EnvironmentManager.getBaseUrl();
     }
 
+    protected Locator locator(String selector) {
+        return page.locator(selector);
+    }
+
+    protected Locator first(String selector) {
+        return locator(selector).first();
+    }
+
+    protected Locator nth(String selector, int index) {
+        return locator(selector).nth(index);
+    }
+
     protected void navigateTo(String url) {
-        page.navigate(url);
+        page.navigate(
+                url,
+                new Page.NavigateOptions()
+                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+        );
+
         waitForPageLoad();
+    }
+
+    protected void navigateToPath(String path) {
+        navigateTo(baseUrl + path);
     }
 
     protected void click(Locator locator) {
@@ -37,12 +59,20 @@ public abstract class BasePage {
         return WaitUtils.isVisible(locator);
     }
 
+    protected int count(Locator locator) {
+        return locator.count();
+    }
+
     protected void waitForPageLoad() {
         WaitUtils.waitForPageLoad(page);
     }
 
     protected void waitForNetworkIdle() {
         WaitUtils.waitForNetworkIdle(page);
+    }
+
+    protected void waitForSelector(String selector) {
+        page.waitForSelector(selector);
     }
 
     protected String getTitle() {

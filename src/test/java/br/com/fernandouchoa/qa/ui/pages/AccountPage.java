@@ -2,9 +2,8 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitUntilState;
 
-import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+import br.com.fernandouchoa.qa.ui.locators.AccountLocators;
 import io.qameta.allure.Step;
 
 public class AccountPage extends BasePage {
@@ -15,7 +14,7 @@ public class AccountPage extends BasePage {
         super(page);
 
         this.loggedUser =
-                page.locator("a:has-text('Logged in as')");
+                locator(AccountLocators.LOGGED_USER);
     }
 
     @Step("Validar se usuário está logado")
@@ -25,13 +24,7 @@ public class AccountPage extends BasePage {
 
     @Step("Realizar logout do usuário")
     public LoginPage logout() {
-
-        page.navigate(
-                EnvironmentManager.getBaseUrl() + "logout",
-                new Page.NavigateOptions()
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
+        navigateToPath("logout");
         return new LoginPage(page);
     }
 }
