@@ -63,7 +63,11 @@ public final class AllureUtils {
                 });
     }
     
-    public static void attachFile(String name, Path filePath, String type) {
+    public static void attachFile(
+            String name,
+            Path filePath,
+            String type,
+            String extension) {
 
         try {
             if (Files.exists(filePath) && Files.size(filePath) > 0) {
@@ -71,10 +75,14 @@ public final class AllureUtils {
                         name,
                         type,
                         Files.newInputStream(filePath),
-                        ".zip"
+                        extension
                 );
             }
         } catch (Exception ignored) {
         }
+    }
+    
+    public static void attachFile(String name, Path filePath, String type) {
+        attachFile(name, filePath, type, ".zip");
     }
 }
