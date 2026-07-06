@@ -10,39 +10,25 @@ import io.qameta.allure.Allure;
 
 public class RetryTestExtension implements InvocationInterceptor {
 
+    private static final int MAX_ATTEMPTS = 2;
+
     @Override
     public void interceptTestMethod(
             Invocation<Void> invocation,
             ReflectiveInvocationContext<Method> invocationContext,
             ExtensionContext extensionContext) throws Throwable {
 
-        RetryTest retryTest =
-                extensionContext.getRequiredTestMethod()
-                        .getAnnotation(RetryTest.class);
-
-        int maxAttempts = retryTest.maxAttempts();
         Throwable lastThrowable = null;
 
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
-                Allure.parameter("Tentativa", attempt + " de " + maxAttempts);
+                Allure.parameter("Tentativa", attempt + " de " + MAX_ATTEMPTS);
                 invocation.proceed();
                 return;
-
             } catch (Throwable throwable) {
                 lastThrowable = throwable;
 
-                System.out.println(
-                        "Teste falhou na tentativa "
-                                + attempt
-                                + " de "
-                                + maxAttempts
-                                + ": "
-                                + extensionContext.getDisplayName()
-                );
-
-                if (attempt == maxAttempts) {
+                if (attempt == MAX_ATTEMPTS) {
                     throw lastThrowable;
                 }
             }

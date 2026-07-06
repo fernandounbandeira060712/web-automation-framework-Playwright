@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import br.com.fernandouchoa.qa.core.retry.RetryTestExtension;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
@@ -18,7 +19,10 @@ import br.com.fernandouchoa.qa.core.extensions.AllureReportExtension;
 import br.com.fernandouchoa.qa.core.factory.PlaywrightFactory;
 import br.com.fernandouchoa.qa.utils.AllureUtils;
 
-@ExtendWith(AllureReportExtension.class)
+@ExtendWith({
+    AllureReportExtension.class,
+    RetryTestExtension.class
+})
 public class BaseTest {
 
     protected Page page;
