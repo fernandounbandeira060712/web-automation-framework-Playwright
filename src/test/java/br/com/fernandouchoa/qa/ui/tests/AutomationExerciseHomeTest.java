@@ -8,7 +8,6 @@ import br.com.fernandouchoa.qa.ui.components.CartModalComponent;
 import br.com.fernandouchoa.qa.ui.pages.AccountPage;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.CheckoutPage;
-import br.com.fernandouchoa.qa.ui.pages.HomePage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductDetailsPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
@@ -32,8 +31,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida a mensagem apresentada quando o usuário informa credenciais inválidas.")
     public void deveRealizarLogin() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         LoginPage loginPage = homePage.header().goToLoginPage();
 
@@ -53,8 +50,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     @Description("Valida que um usuário válido consegue realizar login.")
     public void deveRealizarLoginComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         User validUser = TestDataManager.getUser("validUser");
 
@@ -75,8 +70,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que o usuário consegue finalizar sua sessão.")
     public void deveRealizarLogoutComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         User validUser = TestDataManager.getUser("validUser");
 
@@ -99,8 +92,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida que a página de produtos carrega e exibe produtos disponíveis.")
     public void devePesquisarProdutoComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         ProductsPage productsPage =
                 homePage.header()
@@ -123,8 +114,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que a página inicial é carregada com sucesso.")
     public void deveCarregarHomeComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         AssertUtils.assertTrue(
                 homePage.isLoaded(),
@@ -138,8 +127,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida a exibição das informações detalhadas do produto.")
     public void deveVisualizarDetalhesDoProdutoComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         ProductDetailsPage productDetailsPage =
                 homePage.header()
@@ -168,8 +155,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que um produto pode ser adicionado ao carrinho.")
     public void deveAdicionarProdutoAoCarrinho() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         CartModalComponent cartModal =
                 homePage.header()
@@ -188,8 +173,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que os produtos adicionados aparecem no carrinho.")
     public void deveVisualizarCarrinhoComProdutoAdicionado() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         CartPage cartPage =
                 homePage.header()
@@ -214,8 +197,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que um produto pode ser removido do carrinho.")
     public void deveRemoverProdutoDoCarrinho() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         CartPage cartPage =
                 homePage.header()
@@ -237,8 +218,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida que o carrinho fica vazio após remover o produto.")
     public void deveRemoverProdutoDoCarrinhoComSucesso() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         CartPage cartPage =
                 homePage.header()
@@ -265,8 +244,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     @Description("Valida que um usuário autenticado consegue acessar a página de checkout após adicionar um produto ao carrinho.")
     public void deveAcessarCheckoutComProdutoNoCarrinho() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         User validUser = TestDataManager.getUser("validUser");
 
@@ -293,8 +270,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que os produtos adicionados são exibidos na revisão do pedido durante o checkout.")
     public void deveExibirProdutoNaRevisaoDoCheckout() {
-        HomePage homePage = new HomePage(page);
-        homePage.open();
 
         User validUser = TestDataManager.getUser("validUser");
 
