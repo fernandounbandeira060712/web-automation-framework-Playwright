@@ -3,7 +3,7 @@ package br.com.fernandouchoa.qa.ui.tests;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import com.microsoft.playwright.Video;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
+import com.microsoft.playwright.Video;
 
 import br.com.fernandouchoa.qa.core.driver.DriverManager;
 import br.com.fernandouchoa.qa.core.extensions.AllureReportExtension;
@@ -46,7 +47,8 @@ public class BaseTest {
         Path tracePath =
                 Paths.get("target", "traces", testName + ".zip");
 
-        Video video = page != null ? page.video() : null;
+        Video video =
+                page != null ? page.video() : null;
 
         if (page != null) {
             AllureUtils.attachScreenshot(
@@ -80,11 +82,9 @@ public class BaseTest {
 
         try {
             if (video != null) {
-                Path videoPath = video.path();
-
                 AllureUtils.attachFile(
                         "Vídeo da execução",
-                        videoPath,
+                        video.path(),
                         "video/webm",
                         ".webm"
                 );

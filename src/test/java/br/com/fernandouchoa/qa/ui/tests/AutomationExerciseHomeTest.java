@@ -3,6 +3,7 @@ package br.com.fernandouchoa.qa.ui.tests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import br.com.fernandouchoa.qa.core.retry.RetryTest;
 import br.com.fernandouchoa.qa.model.User;
 import br.com.fernandouchoa.qa.ui.components.CartModalComponent;
 import br.com.fernandouchoa.qa.ui.pages.AccountPage;
@@ -24,7 +25,7 @@ import io.qameta.allure.Story;
 
 public class AutomationExerciseHomeTest extends BaseTest {
 
-	@Test
+	@RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Login")
     @Story("Login com usuário inválido")
@@ -53,7 +54,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+	@RetryTest(maxAttempts = 2)@Test
     @Epic("UI Automation")
     @Feature("Login")
     @Story("Login com usuário válido")
@@ -81,7 +82,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
                 "Usuário não foi autenticado.");
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Logout")
     @Story("Encerrar sessão")
@@ -111,7 +112,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
                 "Usuário não foi deslogado.");
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Produtos")
     @Story("Pesquisa de produtos")
@@ -140,7 +141,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Home")
     @Story("Carregamento da página inicial")
@@ -161,7 +162,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Produtos")
     @Story("Detalhes do produto")
@@ -196,7 +197,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Carrinho")
     @Story("Adicionar produto")
@@ -222,7 +223,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Carrinho")
     @Story("Visualizar carrinho")
@@ -253,7 +254,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Carrinho")
     @Story("Remover produto")
@@ -281,7 +282,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Carrinho")
     @Story("Carrinho vazio")
@@ -314,7 +315,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Checkout")
     @Story("Acessar checkout")
@@ -349,7 +350,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
         );
     }
 
-    @Test
+    @RetryTest(maxAttempts = 2)
     @Epic("UI Automation")
     @Feature("Checkout")
     @Story("Revisão do pedido")

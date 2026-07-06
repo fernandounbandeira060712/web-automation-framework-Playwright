@@ -1,49 +1,51 @@
 package br.com.fernandouchoa.qa.core.retry;
 
-import java.util.List;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.lang.reflect.Method;
 
-import org.junit.jupiter.api.extension.Extension;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
-import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.InvocationInterceptor;
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
-public class RetryTestExtension implements TestTemplateInvocationContextProvider {
+import io.qameta.allure.Allure;
 
-    @Override
-    public boolean supportsTestTemplate(ExtensionContext context) {
-        return context.getTestMethod()
-                .map(method -> method.isAnnotationPresent(RetryTest.class))
-                .orElse(false);
-    }
+public class RetryTestExtension implements InvocationInterceptor {
 
     @Override
-    public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(
-            ExtensionContext context) {
+    public void interceptTestMethod(
+            Invocation<Void> invocation,
+            ReflectiveInvocationContext<Method> invocationContext,
+            ExtensionContext extensionContext) throws Throwable {
 
         RetryTest retryTest =
-                context.getRequiredTestMethod().getAnnotation(RetryTest.class);
+                extensionContext.getRequiredTestMethod()
+                        .getAnnotation(RetryTest.class);
 
-        return IntStream.rangeClosed(1, retryTest.maxAttempts())
-                .mapToObj(attempt -> invocationContext(attempt, retryTest.maxAttempts()));
-    }
+        int maxAttempts = retryTest.maxAttempts();
+        Throwable lastThrowable = null;
 
-    private TestTemplateInvocationContext invocationContext(
-            int attempt,
-            int maxAttempts) {
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
 
-        return new TestTemplateInvocationContext() {
+            try {
+                Allure.parameter("Tentativa", attempt + " de " + maxAttempts);
+                invocation.proceed();
+                return;
 
-            @Override
-            public String getDisplayName(int invocationIndex) {
-                return "Tentativa " + attempt + " de " + maxAttempts;
+            } catch (Throwable throwable) {
+                lastThrowable = throwable;
+
+                System.out.println(
+                        "Teste falhou na tentativa "
+                                + attempt
+                                + " de "
+                                + maxAttempts
+                                + ": "
+                                + extensionContext.getDisplayName()
+                );
+
+                if (attempt == maxAttempts) {
+                    throw lastThrowable;
+                }
             }
-
-            @Override
-            public List<Extension> getAdditionalExtensions() {
-                return List.of(new RetryAttemptExtension(attempt, maxAttempts));
-            }
-        };
+        }
     }
 }
