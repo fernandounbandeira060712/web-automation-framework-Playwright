@@ -2,14 +2,13 @@ package br.com.fernandouchoa.qa.core.factory;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.core.driver.DriverManager;
+
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
-import java.nio.file.Paths;
 import com.microsoft.playwright.Tracing;
-
 
 public final class PlaywrightFactory {
 
@@ -26,12 +25,9 @@ public final class PlaywrightFactory {
 
         Browser browser = launchBrowser(playwright, options);
 
-        BrowserContext context =
-                browser.newContext(
-                        new Browser.NewContextOptions()
-                                .setRecordVideoDir(Paths.get("target/videos"))
-                );
-        
+        BrowserContext context = browser.newContext();
+        context.setDefaultTimeout(EnvironmentManager.getTimeout());
+
         context.tracing().start(
                 new Tracing.StartOptions()
                         .setScreenshots(true)

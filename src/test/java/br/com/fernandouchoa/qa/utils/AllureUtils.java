@@ -66,12 +66,12 @@ public final class AllureUtils {
     public static void attachFile(String name, Path filePath, String type) {
 
         try {
-            if (Files.exists(filePath)) {
+            if (Files.exists(filePath) && Files.size(filePath) > 0) {
                 Allure.addAttachment(
                         name,
                         type,
                         Files.newInputStream(filePath),
-                        filePath.toString()
+                        ".zip"
                 );
             }
         } catch (Exception ignored) {
