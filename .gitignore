@@ -1,5 +1,6 @@
-target/ 
-allure-results/ 
-.settings/ 
-.classpath 
-.project 
+target/
+allure-results/
+.settings/
+.classpath
+.project
+.allure/
