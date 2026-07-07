@@ -9,9 +9,17 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   ui-tests:
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
 
     steps:
       - name: Checkout repository
@@ -33,9 +41,27 @@ jobs:
       - name: Static Code Analysis - PMD
         run: mvn pmd:check
 
+      - name: Generate Allure Report
+        if: always()
+        run: mvn allure:report
+
       - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: target/allure-results
+
+      - name: Setup GitHub Pages
+        if: always() && github.event_name == 'push'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Allure Report to Pages
+        if: always() && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/site/allure-maven-plugin
+
+      - name: Deploy Allure Report to GitHub Pages
+        if: always() && github.event_name == 'push'
+        uses: actions/deploy-pages@v4
