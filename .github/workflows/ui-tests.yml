@@ -64,4 +64,4 @@ jobs:
 
       - name: Deploy Allure Report to GitHub Pages
         if: always() && github.event_name == 'push'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4 
