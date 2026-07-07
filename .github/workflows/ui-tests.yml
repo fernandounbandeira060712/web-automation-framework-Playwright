@@ -20,6 +20,7 @@ jobs:
 
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -41,9 +42,18 @@ jobs:
       - name: Static Code Analysis - PMD
         run: mvn pmd:check
 
+      - name: Install Allure CLI
+        if: always()
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
+          tar -zxvf allure-2.29.0.tgz
+          sudo mv allure-2.29.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+          allure --version
+
       - name: Generate Allure Report
         if: always()
-        run: mvn allure:report
+        run: allure generate target/allure-results --clean -o target/allure-report
 
       - name: Upload Allure Results
         if: always()
@@ -52,16 +62,24 @@ jobs:
           name: allure-results
           path: target/allure-results
 
+      - name: Upload Allure HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report
+          path: target/allure-report
+
       - name: Setup GitHub Pages
         if: always() && github.event_name == 'push'
         uses: actions/configure-pages@v5
 
-      - name: Upload Allure Report to Pages
+      - name: Upload GitHub Pages Artifact
         if: always() && github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: target/site/allure-maven-plugin
+          path: target/allure-report
 
-      - name: Deploy Allure Report to GitHub Pages
+      - name: Deploy to GitHub Pages
         if: always() && github.event_name == 'push'
-        uses: actions/deploy-pages@v4 
+        id: deployment
+        uses: actions/deploy-pages@v4
