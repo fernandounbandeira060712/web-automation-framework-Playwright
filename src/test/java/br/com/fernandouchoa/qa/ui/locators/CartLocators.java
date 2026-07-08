@@ -16,4 +16,7 @@ public final class CartLocators {
 
     public static final String PROCEED_TO_CHECKOUT_BUTTON =
             ".check_out";
+
+    public static final String EMPTY_CART_MESSAGE =
+            "#empty_cart";
 }

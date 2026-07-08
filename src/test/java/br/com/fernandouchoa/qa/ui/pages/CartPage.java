@@ -3,6 +3,7 @@ package br.com.fernandouchoa.qa.ui.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 
+import br.com.fernandouchoa.qa.ui.locators.CartLocators;
 import io.qameta.allure.Step;
 
 public class CartPage extends BasePage {
@@ -16,20 +17,11 @@ public class CartPage extends BasePage {
     public CartPage(Page page) {
         super(page);
 
-        this.cartTable =
-                page.locator("#cart_info");
-
-        this.cartItems =
-                page.locator("#cart_info_table tbody tr");
-
-        this.deleteButtons =
-                page.locator(".cart_quantity_delete");
-
-        this.proceedToCheckoutButton =
-                page.locator(".check_out");
-
-        this.emptyCartMessage =
-                page.locator("#empty_cart");
+        this.cartTable = locator(CartLocators.CART_TABLE);
+        this.cartItems = locator(CartLocators.CART_ITEMS);
+        this.deleteButtons = locator(CartLocators.DELETE_BUTTONS);
+        this.proceedToCheckoutButton = locator(CartLocators.PROCEED_TO_CHECKOUT_BUTTON);
+        this.emptyCartMessage = locator(CartLocators.EMPTY_CART_MESSAGE);
     }
 
     @Step("Validar se a página do carrinho foi carregada")
@@ -40,20 +32,13 @@ public class CartPage extends BasePage {
     @Step("Validar se existem produtos no carrinho")
     public boolean hasProducts() {
         waitForPageLoad();
-        return cartItems.count() > 0;
+        return count(cartItems) > 0;
     }
 
     @Step("Remover o primeiro produto do carrinho")
     public CartPage removeFirstProduct() {
-
-        if (cartItems.count() == 0) {
-            waitForPageLoad();
-        }
-
         click(deleteButtons.first());
-
         page.waitForTimeout(1500);
-
         return this;
     }
 
@@ -61,8 +46,8 @@ public class CartPage extends BasePage {
     public boolean isEmpty() {
         waitForPageLoad();
 
-        return cartItems.count() == 0
-                || emptyCartMessage.isVisible();
+        return count(cartItems) == 0
+                || isVisible(emptyCartMessage);
     }
 
     @Step("Prosseguir para o checkout")

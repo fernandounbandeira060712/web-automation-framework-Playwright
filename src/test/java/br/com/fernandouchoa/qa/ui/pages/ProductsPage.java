@@ -4,7 +4,6 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
-import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.ui.components.CartModalComponent;
 import br.com.fernandouchoa.qa.ui.locators.ProductsLocators;
 import io.qameta.allure.Allure;
@@ -20,17 +19,10 @@ public class ProductsPage extends BasePage {
     public ProductsPage(Page page) {
         super(page);
 
-        this.productsSection =
-                page.locator(ProductsLocators.PRODUCTS_SECTION);
-
-        this.searchInput =
-                page.locator(ProductsLocators.SEARCH_INPUT);
-
-        this.searchButton =
-                page.locator(ProductsLocators.SEARCH_BUTTON);
-
-        this.productCards =
-                page.locator(ProductsLocators.PRODUCT_CARDS);
+        this.productsSection = locator(ProductsLocators.PRODUCTS_SECTION);
+        this.searchInput = locator(ProductsLocators.SEARCH_INPUT);
+        this.searchButton = locator(ProductsLocators.SEARCH_BUTTON);
+        this.productCards = locator(ProductsLocators.PRODUCT_CARDS);
     }
 
     @Step("Validar se a página de produtos foi carregada")
@@ -44,29 +36,26 @@ public class ProductsPage extends BasePage {
 
         fill(searchInput, productName);
         click(searchButton);
-
-        page.waitForSelector(ProductsLocators.PRODUCT_CARDS);
+        waitForSelector(ProductsLocators.PRODUCT_CARDS);
 
         return this;
     }
 
     @Step("Validar se existem produtos exibidos")
     public boolean hasProductsDisplayed() {
-        return productCards.count() > 0;
+        return count(productCards) > 0;
     }
 
     @Step("Capturar quantidade de produtos exibidos")
     public int getProductsCount() {
-        return productCards.count();
+        return count(productCards);
     }
 
     @Step("Visualizar detalhes do produto")
     public ProductDetailsPage viewProductById(String productId) {
         Allure.parameter("ID do produto", productId);
 
-        page.navigate(
-                EnvironmentManager.getBaseUrl()
-                        + ProductsLocators.productDetailsUrl(productId));
+        navigateToPath(ProductsLocators.productDetailsUrl(productId));
 
         return new ProductDetailsPage(page);
     }
@@ -76,14 +65,15 @@ public class ProductsPage extends BasePage {
         Allure.parameter("ID do produto", productId);
 
         Locator addToCartButton =
-                page.locator(ProductsLocators.addToCartButtonByProductId(productId));
+                locator(ProductsLocators.addToCartButtonByProductId(productId));
 
         click(addToCartButton);
 
         page.waitForSelector(
                 ProductsLocators.CART_MODAL,
                 new Page.WaitForSelectorOptions()
-                        .setState(WaitForSelectorState.VISIBLE));
+                        .setState(WaitForSelectorState.VISIBLE)
+        );
 
         return new CartModalComponent(page);
     }
