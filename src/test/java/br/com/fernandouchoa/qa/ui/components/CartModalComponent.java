@@ -2,7 +2,6 @@ package br.com.fernandouchoa.qa.ui.components;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitForSelectorState;
 
 import br.com.fernandouchoa.qa.ui.locators.CartModalLocators;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
@@ -20,14 +19,9 @@ public class CartModalComponent {
     public CartModalComponent(Page page) {
         this.page = page;
 
-        this.modal =
-                page.locator(CartModalLocators.MODAL);
-
-        this.continueShoppingButton =
-                page.locator(CartModalLocators.CONTINUE_SHOPPING_BUTTON);
-
-        this.viewCartButton =
-                page.locator(CartModalLocators.VIEW_CART_BUTTON);
+        this.modal = page.locator(CartModalLocators.MODAL);
+        this.continueShoppingButton = page.locator(CartModalLocators.CONTINUE_SHOPPING_BUTTON);
+        this.viewCartButton = page.locator(CartModalLocators.VIEW_CART_BUTTON);
     }
 
     @Step("Validar se o modal de produto adicionado foi exibido")
@@ -48,11 +42,7 @@ public class CartModalComponent {
 
     @Step("Aguardar modal de produto adicionado")
     public CartModalComponent waitUntilDisplayed() {
-        page.waitForSelector(
-                CartModalLocators.MODAL,
-                new Page.WaitForSelectorOptions()
-                        .setState(WaitForSelectorState.VISIBLE));
-
+        WaitUtils.waitForSelector(page, CartModalLocators.MODAL);
         return this;
     }
 }

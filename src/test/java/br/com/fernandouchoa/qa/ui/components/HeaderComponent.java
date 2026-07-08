@@ -1,22 +1,23 @@
 package br.com.fernandouchoa.qa.ui.components;
 
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitUntilState;
 
+import br.com.fernandouchoa.qa.core.actions.PageActions;
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.ui.locators.HeaderLocators;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
-import br.com.fernandouchoa.qa.utils.WaitUtils;
 import io.qameta.allure.Step;
 
 public class HeaderComponent {
 
     private final Page page;
+    private final PageActions actions;
 
     public HeaderComponent(Page page) {
         this.page = page;
+        this.actions = new PageActions(page);
     }
 
     @Step("Acessar página de Login")
@@ -38,13 +39,6 @@ public class HeaderComponent {
     }
 
     private void navigateTo(String path) {
-        page.navigate(
-                EnvironmentManager.getBaseUrl() + path,
-                new Page.NavigateOptions()
-                        .setTimeout(EnvironmentManager.getTimeout())
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
-        WaitUtils.waitForPageLoad(page);
+        actions.navigateTo(EnvironmentManager.getBaseUrl() + path);
     }
 }
