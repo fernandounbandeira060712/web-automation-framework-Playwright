@@ -2,42 +2,36 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.WaitUntilState;
 
+import br.com.fernandouchoa.qa.core.actions.PageActions;
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
-import br.com.fernandouchoa.qa.utils.WaitUtils;
 
 public abstract class BasePage {
 
     protected final Page page;
     protected final String baseUrl;
+    protected final PageActions actions;
 
     protected BasePage(Page page) {
         this.page = page;
         this.baseUrl = EnvironmentManager.getBaseUrl();
+        this.actions = new PageActions(page);
     }
 
     protected Locator locator(String selector) {
-        return page.locator(selector);
+        return actions.locator(selector);
     }
 
     protected Locator first(String selector) {
-        return locator(selector).first();
+        return actions.first(selector);
     }
 
     protected Locator nth(String selector, int index) {
-        return locator(selector).nth(index);
+        return actions.nth(selector, index);
     }
 
     protected void navigateTo(String url) {
-        page.navigate(
-                url,
-                new Page.NavigateOptions()
-                        .setTimeout(EnvironmentManager.getTimeout())
-                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-        );
-
-        waitForPageLoad();
+        actions.navigateTo(url);
     }
 
     protected void navigateToPath(String path) {
@@ -45,42 +39,42 @@ public abstract class BasePage {
     }
 
     protected void click(Locator locator) {
-        WaitUtils.click(locator);
+        actions.click(locator);
     }
 
     protected void fill(Locator locator, String value) {
-        WaitUtils.fill(locator, value);
+        actions.fill(locator, value);
     }
 
     protected String getText(Locator locator) {
-        return WaitUtils.getText(locator);
+        return actions.getText(locator);
     }
 
     protected boolean isVisible(Locator locator) {
-        return WaitUtils.isVisible(locator);
+        return actions.isVisible(locator);
     }
 
     protected int count(Locator locator) {
-        return WaitUtils.count(locator);
+        return actions.count(locator);
     }
 
     protected void waitForPageLoad() {
-        WaitUtils.waitForPageLoad(page);
+        actions.waitForPageLoad();
     }
 
     protected void waitForNetworkIdle() {
-        WaitUtils.waitForNetworkIdle(page);
+        actions.waitForNetworkIdle();
     }
 
     protected void waitForSelector(String selector) {
-        WaitUtils.waitForSelector(page, selector);
+        actions.waitForSelector(selector);
     }
 
     protected String getTitle() {
-        return page.title();
+        return actions.getTitle();
     }
 
     protected String getCurrentUrl() {
-        return page.url();
+        return actions.getCurrentUrl();
     }
 }
