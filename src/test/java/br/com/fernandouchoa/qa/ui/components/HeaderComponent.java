@@ -1,6 +1,7 @@
 package br.com.fernandouchoa.qa.ui.components;
 
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.WaitUntilState;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.ui.locators.HeaderLocators;
@@ -37,7 +38,13 @@ public class HeaderComponent {
     }
 
     private void navigateTo(String path) {
-        page.navigate(EnvironmentManager.getBaseUrl() + path);
+        page.navigate(
+                EnvironmentManager.getBaseUrl() + path,
+                new Page.NavigateOptions()
+                        .setTimeout(EnvironmentManager.getTimeout())
+                        .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+        );
+
         WaitUtils.waitForPageLoad(page);
     }
 }

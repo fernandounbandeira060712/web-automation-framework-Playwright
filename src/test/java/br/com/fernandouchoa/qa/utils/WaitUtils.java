@@ -5,9 +5,9 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 import com.microsoft.playwright.options.WaitForSelectorState;
 
-public final class WaitUtils {
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 
-    private static final double DEFAULT_TIMEOUT = 30000;
+public final class WaitUtils {
 
     private WaitUtils() {
     }
@@ -24,7 +24,7 @@ public final class WaitUtils {
         locator.waitFor(
                 new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
@@ -32,7 +32,7 @@ public final class WaitUtils {
         locator.waitFor(
                 new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.HIDDEN)
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
@@ -40,7 +40,7 @@ public final class WaitUtils {
         locator.waitFor(
                 new Locator.WaitForOptions()
                         .setState(WaitForSelectorState.ATTACHED)
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
@@ -106,10 +106,6 @@ public final class WaitUtils {
 
     public static void waitForText(Locator locator, String expectedText) {
         waitUntilVisible(locator);
-        locator.waitFor(
-                new Locator.WaitForOptions()
-                        .setTimeout(DEFAULT_TIMEOUT)
-        );
 
         if (!locator.innerText().contains(expectedText)) {
             throw new AssertionError(
@@ -125,7 +121,7 @@ public final class WaitUtils {
         page.waitForURL(
                 url -> url.contains(expectedText),
                 new Page.WaitForURLOptions()
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
@@ -134,7 +130,7 @@ public final class WaitUtils {
                 selector,
                 new Page.WaitForSelectorOptions()
                         .setState(WaitForSelectorState.VISIBLE)
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
@@ -143,12 +139,11 @@ public final class WaitUtils {
                 selector,
                 new Page.WaitForSelectorOptions()
                         .setState(WaitForSelectorState.HIDDEN)
-                        .setTimeout(DEFAULT_TIMEOUT)
+                        .setTimeout(EnvironmentManager.getTimeout())
         );
     }
 
     public static int count(Locator locator) {
-        waitUntilAttached(locator.first());
         return locator.count();
     }
 }

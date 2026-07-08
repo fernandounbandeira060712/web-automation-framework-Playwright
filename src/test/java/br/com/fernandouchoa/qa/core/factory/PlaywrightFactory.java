@@ -1,7 +1,8 @@
 package br.com.fernandouchoa.qa.core.factory;
 
-import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import java.nio.file.Paths;
+
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.core.driver.DriverManager;
 
 import com.microsoft.playwright.Browser;
@@ -26,11 +27,13 @@ public final class PlaywrightFactory {
 
         Browser browser = launchBrowser(playwright, options);
 
-        BrowserContext context = browser.newContext(
-                new Browser.NewContextOptions()
-                        .setRecordVideoDir(Paths.get("target", "videos"))
-                        .setRecordVideoSize(1280, 720)
-        );
+        BrowserContext context =
+                browser.newContext(
+                        new Browser.NewContextOptions()
+                                .setRecordVideoDir(Paths.get("target", "videos"))
+                                .setRecordVideoSize(1280, 720)
+                );
+
         context.setDefaultTimeout(EnvironmentManager.getTimeout());
 
         context.tracing().start(
@@ -70,7 +73,7 @@ public final class PlaywrightFactory {
             DriverManager.getPlaywright().close();
         }
 
-        DriverManager.unload();
+        DriverManager.clear();
     }
 
     private static Browser launchBrowser(

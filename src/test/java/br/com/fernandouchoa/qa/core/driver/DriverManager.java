@@ -5,6 +5,12 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 
+/**
+ * Gerencia as instâncias do Playwright utilizando ThreadLocal.
+ *
+ * Essa abordagem permite execuções isoladas por thread, preparando o framework
+ * para cenários futuros de execução paralela.
+ */
 public final class DriverManager {
 
     private static final ThreadLocal<Page> PAGE = new ThreadLocal<>();
@@ -47,10 +53,10 @@ public final class DriverManager {
         PLAYWRIGHT.set(playwright);
     }
 
-    public static void unload() {
-        PAGE.remove();
-        CONTEXT.remove();
-        BROWSER.remove();
+    public static void clear() {
         PLAYWRIGHT.remove();
+        BROWSER.remove();
+        CONTEXT.remove();
+        PAGE.remove();
     }
 }

@@ -4,6 +4,7 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitUntilState;
 
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.utils.WaitUtils;
 
 public class PageActions {
@@ -30,7 +31,7 @@ public class PageActions {
         page.navigate(
                 url,
                 new Page.NavigateOptions()
-                        .setTimeout(60000)
+                        .setTimeout(EnvironmentManager.getTimeout())
                         .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
         );
 
