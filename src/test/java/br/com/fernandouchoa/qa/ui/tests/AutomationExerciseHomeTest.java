@@ -5,12 +5,7 @@ import br.com.fernandouchoa.qa.core.annotations.Regression;
 import br.com.fernandouchoa.qa.core.annotations.Smoke;
 import br.com.fernandouchoa.qa.model.User;
 import br.com.fernandouchoa.qa.ui.components.CartModalComponent;
-import br.com.fernandouchoa.qa.ui.pages.AccountPage;
-import br.com.fernandouchoa.qa.ui.pages.CartPage;
-import br.com.fernandouchoa.qa.ui.pages.CheckoutPage;
-import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductDetailsPage;
-import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
 import br.com.fernandouchoa.qa.utils.AssertUtils;
 import br.com.fernandouchoa.qa.utils.TestDataManager;
 import io.qameta.allure.Description;
@@ -31,8 +26,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida a mensagem apresentada quando o usuário informa credenciais inválidas.")
     public void deveRealizarLogin() {
-
-        LoginPage loginPage = homePage.header().goToLoginPage();
+        loginPage = homePage.header().goToLoginPage();
 
         User invalidUser = TestDataManager.getUser("invalidUser");
 
@@ -50,13 +44,11 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     @Description("Valida que um usuário válido consegue realizar login.")
     public void deveRealizarLoginComSucesso() {
-
         User validUser = TestDataManager.getUser("validUser");
 
-        AccountPage accountPage =
-                homePage.header()
-                        .goToLoginPage()
-                        .loginSuccessfully(validUser);
+        accountPage = homePage.header()
+                .goToLoginPage()
+                .loginSuccessfully(validUser);
 
         AssertUtils.assertTrue(
                 accountPage.isLoaded(),
@@ -70,15 +62,13 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que o usuário consegue finalizar sua sessão.")
     public void deveRealizarLogoutComSucesso() {
-
         User validUser = TestDataManager.getUser("validUser");
 
-        AccountPage accountPage =
-                homePage.header()
-                        .goToLoginPage()
-                        .loginSuccessfully(validUser);
+        accountPage = homePage.header()
+                .goToLoginPage()
+                .loginSuccessfully(validUser);
 
-        LoginPage loginPage = accountPage.logout();
+        loginPage = accountPage.logout();
 
         AssertUtils.assertTrue(
                 loginPage.isLoginPageLoaded(),
@@ -92,10 +82,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida que a página de produtos carrega e exibe produtos disponíveis.")
     public void devePesquisarProdutoComSucesso() {
-
-        ProductsPage productsPage =
-                homePage.header()
-                        .goToProductsPage();
+        productsPage = homePage.header().goToProductsPage();
 
         AssertUtils.assertTrue(
                 productsPage.isLoaded(),
@@ -114,7 +101,6 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que a página inicial é carregada com sucesso.")
     public void deveCarregarHomeComSucesso() {
-
         AssertUtils.assertTrue(
                 homePage.isLoaded(),
                 "Home Page não foi carregada."
@@ -127,11 +113,9 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida a exibição das informações detalhadas do produto.")
     public void deveVisualizarDetalhesDoProdutoComSucesso() {
-
-        ProductDetailsPage productDetailsPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .viewProductById("1");
+        ProductDetailsPage productDetailsPage = homePage.header()
+                .goToProductsPage()
+                .viewProductById("1");
 
         AssertUtils.assertTrue(
                 productDetailsPage.isLoaded(),
@@ -155,11 +139,9 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que um produto pode ser adicionado ao carrinho.")
     public void deveAdicionarProdutoAoCarrinho() {
-
-        CartModalComponent cartModal =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1");
+        CartModalComponent cartModal = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1");
 
         AssertUtils.assertTrue(
                 cartModal.isDisplayed(),
@@ -173,12 +155,10 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que os produtos adicionados aparecem no carrinho.")
     public void deveVisualizarCarrinhoComProdutoAdicionado() {
-
-        CartPage cartPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1")
-                        .viewCart();
+        cartPage = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1")
+                .viewCart();
 
         AssertUtils.assertTrue(
                 cartPage.isLoaded(),
@@ -197,12 +177,10 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que um produto pode ser removido do carrinho.")
     public void deveRemoverProdutoDoCarrinho() {
-
-        CartPage cartPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1")
-                        .viewCart();
+        cartPage = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1")
+                .viewCart();
 
         cartPage.removeFirstProduct();
 
@@ -218,12 +196,10 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida que o carrinho fica vazio após remover o produto.")
     public void deveRemoverProdutoDoCarrinhoComSucesso() {
-
-        CartPage cartPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1")
-                        .viewCart();
+        cartPage = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1")
+                .viewCart();
 
         AssertUtils.assertTrue(
                 cartPage.hasProducts(),
@@ -244,19 +220,17 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.BLOCKER)
     @Description("Valida que um usuário autenticado consegue acessar a página de checkout após adicionar um produto ao carrinho.")
     public void deveAcessarCheckoutComProdutoNoCarrinho() {
-
         User validUser = TestDataManager.getUser("validUser");
 
         homePage.header()
                 .goToLoginPage()
                 .loginSuccessfully(validUser);
 
-        CheckoutPage checkoutPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1")
-                        .viewCart()
-                        .proceedToCheckout();
+        checkoutPage = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1")
+                .viewCart()
+                .proceedToCheckout();
 
         AssertUtils.assertTrue(
                 checkoutPage.isLoaded(),
@@ -270,19 +244,17 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Severity(SeverityLevel.CRITICAL)
     @Description("Valida que os produtos adicionados são exibidos na revisão do pedido durante o checkout.")
     public void deveExibirProdutoNaRevisaoDoCheckout() {
-
         User validUser = TestDataManager.getUser("validUser");
 
         homePage.header()
                 .goToLoginPage()
                 .loginSuccessfully(validUser);
 
-        CheckoutPage checkoutPage =
-                homePage.header()
-                        .goToProductsPage()
-                        .addProductToCartById("1")
-                        .viewCart()
-                        .proceedToCheckout();
+        checkoutPage = homePage.header()
+                .goToProductsPage()
+                .addProductToCartById("1")
+                .viewCart()
+                .proceedToCheckout();
 
         AssertUtils.assertTrue(
                 checkoutPage.hasOrderItems(),

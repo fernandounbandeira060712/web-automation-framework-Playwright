@@ -16,7 +16,6 @@ import com.microsoft.playwright.Video;
 import br.com.fernandouchoa.qa.core.driver.DriverManager;
 import br.com.fernandouchoa.qa.core.extensions.AllureReportExtension;
 import br.com.fernandouchoa.qa.core.factory.PlaywrightFactory;
-import br.com.fernandouchoa.qa.core.retry.RetryTestExtension;
 import br.com.fernandouchoa.qa.ui.pages.AccountPage;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.CheckoutPage;
@@ -25,10 +24,7 @@ import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
 import br.com.fernandouchoa.qa.utils.AllureUtils;
 
-@ExtendWith({
-        AllureReportExtension.class,
-        RetryTestExtension.class
-})
+@ExtendWith(AllureReportExtension.class)
 public class BaseTest {
 
     protected Page page;
@@ -51,7 +47,6 @@ public class BaseTest {
         }
 
         PlaywrightFactory.createInstance();
-
         page = PlaywrightFactory.getPage();
 
         homePage = new HomePage(page);

@@ -2,6 +2,7 @@ package br.com.fernandouchoa.qa.ui.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 
 import br.com.fernandouchoa.qa.ui.components.HeaderComponent;
 import br.com.fernandouchoa.qa.ui.locators.HomeLocators;
@@ -29,7 +30,20 @@ public class HomePage extends BasePage {
 
     @Step("Acessar a Home Page")
     public HomePage open() {
-        navigateTo(baseUrl);
+
+        try {
+            navigateTo(baseUrl);
+
+        } catch (PlaywrightException exception) {
+
+            if (!exception.getMessage().contains("net::ERR_ABORTED")) {
+                throw exception;
+            }
+
+            page.evaluate("window.stop()");
+            waitForPageLoad();
+        }
+
         return this;
     }
 
