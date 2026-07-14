@@ -132,7 +132,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ steps.dependency-check-cache.outputs.cache-primary-key }}
+          key: ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
 
       - name: Install Allure CLI
         if: always()
@@ -233,13 +233,58 @@ jobs:
         with:
           path: target/allure-report
 
+  codeql:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+          queries: security-extended
+          build-mode: manual
+
+      - name: Build Project for CodeQL
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          -DskipTests
+          test-compile
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:java-kotlin"
+
   deploy-pages:
     name: Deploy Allure Report
-    needs: quality-gate
+
+    needs:
+      - quality-gate
+      - codeql
 
     if: >
       always() &&
       needs.quality-gate.result != 'cancelled' &&
+      needs.codeql.result != 'cancelled' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
