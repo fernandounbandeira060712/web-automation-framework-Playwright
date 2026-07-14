@@ -22,10 +22,10 @@ jobs:
   quality-gate:
     name: Tests and Quality Gates
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -39,22 +39,40 @@ jobs:
         id: dependency-cache-key
         shell: bash
         run: |
-          echo "week=$(date +'%G-%V')" >> "$GITHUB_OUTPUT"
+          WEEK="$(date +'%G-%V')"
+
+          echo "week=${WEEK}" >> "$GITHUB_OUTPUT"
+          echo "Dependency-Check cache period: ${WEEK}"
 
       - name: Restore Dependency Check Database
         id: dependency-check-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
+          key: ${{ runner.os }}-dependency-check-v3-12.2.2-${{ steps.dependency-cache-key.outputs.week }}
           restore-keys: |
-            ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-
-            ${{ runner.os }}-dependency-check-
+            ${{ runner.os }}-dependency-check-v3-12.2.2-
+            ${{ runner.os }}-dependency-check-v3-
 
-      - name: Show Dependency Check Cache Status
+      - name: Inspect Dependency Check Cache
+        id: dependency-database
         shell: bash
         run: |
-          echo "Dependency-Check cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
+          DATA_DIRECTORY="$HOME/.m2/repository/org/owasp/dependency-check-data"
+
+          echo "Exact cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
+
+          if [ -d "$DATA_DIRECTORY" ] &&
+             find "$DATA_DIRECTORY" -type f -size +0c | grep -q .; then
+
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Dependency-Check database files were restored."
+
+            du -sh "$DATA_DIRECTORY" || true
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No usable Dependency-Check database was restored."
+          fi
 
       - name: Application Health Check
         shell: bash
@@ -110,7 +128,7 @@ jobs:
           --no-transfer-progress
           spotbugs:check
 
-      - name: Dependency Vulnerability Analysis
+      - name: Validate NVD API Key
         if: always()
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
@@ -121,18 +139,101 @@ jobs:
             exit 1
           fi
 
+          echo "NVD API Key is configured."
+
+      - name: Update Dependency Check Database
+        id: dependency-update
+        if: >
+          always() &&
+          steps.dependency-check-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+
+          while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
+            echo "Dependency-Check database update attempt ${ATTEMPT}/${MAX_ATTEMPTS}."
+
+            if mvn \
+              --batch-mode \
+              --no-transfer-progress \
+              dependency-check:update-only; then
+
+              echo "Dependency-Check database updated successfully."
+              exit 0
+            fi
+
+            if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
+              WAIT_SECONDS=$((ATTEMPT * 60))
+
+              echo "::warning::NVD update failed."
+              echo "Waiting ${WAIT_SECONDS} seconds before retrying."
+
+              sleep "$WAIT_SECONDS"
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "::error::NVD update failed after ${MAX_ATTEMPTS} attempts."
+          exit 1
+
+      - name: Validate Dependency Check Database Availability
+        if: always()
+        shell: bash
+        run: |
+          UPDATE_OUTCOME="${{ steps.dependency-update.outcome }}"
+          CACHE_AVAILABLE="${{ steps.dependency-database.outputs.available }}"
+          EXACT_CACHE_HIT="${{ steps.dependency-check-cache.outputs.cache-hit }}"
+
+          echo "Update outcome: ${UPDATE_OUTCOME}"
+          echo "Existing database available: ${CACHE_AVAILABLE}"
+          echo "Exact cache hit: ${EXACT_CACHE_HIT}"
+
+          if [ "$EXACT_CACHE_HIT" = "true" ]; then
+            echo "Using current cached Dependency-Check database."
+            exit 0
+          fi
+
+          if [ "$UPDATE_OUTCOME" = "success" ]; then
+            echo "Using freshly updated Dependency-Check database."
+            exit 0
+          fi
+
+          if [ "$CACHE_AVAILABLE" = "true" ]; then
+            echo "::warning::NVD is unavailable. Using the previously cached database."
+            exit 0
+          fi
+
+          echo "::error::No valid Dependency-Check database is available."
+          exit 1
+
+      - name: Save Dependency Check Database
+        if: >
+          always() &&
+          steps.dependency-check-cache.outputs.cache-hit != 'true' &&
+          steps.dependency-update.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-v3-12.2.2-${{ steps.dependency-cache-key.outputs.week }}
+
+      - name: Dependency Vulnerability Analysis
+        if: always()
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          echo "Running dependency scan using the prepared local database."
+
           mvn \
             --batch-mode \
             --no-transfer-progress \
             dependency-check:check \
-            -DnvdApiKey="$NVD_API_KEY"
-
-      - name: Save Dependency Check Database
-        if: always() && steps.dependency-check-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
+            -DautoUpdate=false
 
       - name: Install Allure CLI
         if: always()
@@ -244,7 +345,7 @@ jobs:
       packages: read
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Java 17
