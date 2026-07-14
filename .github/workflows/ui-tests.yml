@@ -35,6 +35,27 @@ jobs:
           java-version: 17
           cache: maven
 
+      - name: Generate Dependency Check Cache Key
+        id: dependency-cache-key
+        shell: bash
+        run: |
+          echo "week=$(date +'%G-%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Dependency Check Database
+        id: dependency-check-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-${{ steps.dependency-cache-key.outputs.week }}-
+            ${{ runner.os }}-dependency-check-
+
+      - name: Show Dependency Check Cache Status
+        shell: bash
+        run: |
+          echo "Dependency-Check cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
+
       - name: Application Health Check
         shell: bash
         run: |
@@ -91,11 +112,27 @@ jobs:
 
       - name: Dependency Vulnerability Analysis
         if: always()
-        run: >
-          mvn
-          --batch-mode
-          --no-transfer-progress
-          dependency-check:check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "::error::Repository secret NVD_API_KEY is not configured."
+            exit 1
+          fi
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            dependency-check:check \
+            -DnvdApiKey="$NVD_API_KEY"
+
+      - name: Save Dependency Check Database
+        if: always() && steps.dependency-check-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ steps.dependency-check-cache.outputs.cache-primary-key }}
 
       - name: Install Allure CLI
         if: always()
@@ -176,7 +213,7 @@ jobs:
           name: dependency-check-report-${{ github.run_number }}
           path: target/dependency-check
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 30
 
       - name: Setup GitHub Pages
         if: >

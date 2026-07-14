@@ -231,37 +231,36 @@
                 </configuration>
             </plugin>
 
-            <!-- OWASP Dependency Vulnerability Analysis -->
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>${dependency-check.version}</version>
+<!-- OWASP Dependency Vulnerability Analysis -->
+<plugin>
+    <groupId>org.owasp</groupId>
+    <artifactId>dependency-check-maven</artifactId>
+    <version>${dependency-check.version}</version>
 
-                <configuration>
-                    <failBuildOnCVSS>8</failBuildOnCVSS>
-                    <skipProvidedScope>true</skipProvidedScope>
+    <configuration>
+        <failBuildOnCVSS>8</failBuildOnCVSS>
+        <failOnError>true</failOnError>
 
-                    <formats>
-                        <format>HTML</format>
-                        <format>JSON</format>
-                    </formats>
+        <skipProvidedScope>true</skipProvidedScope>
+        <skipTestScope>true</skipTestScope>
 
-                    <outputDirectory>
-                        ${project.build.directory}/dependency-check
-                    </outputDirectory>
-                </configuration>
+        <formats>
+            <format>HTML</format>
+            <format>JSON</format>
+            <format>SARIF</format>
+        </formats>
 
-                <executions>
-                    <execution>
-                        <id>dependency-vulnerability-check</id>
-                        <phase>verify</phase>
+        <outputDirectory>
+            ${project.build.directory}/dependency-check
+        </outputDirectory>
 
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+        <dataDirectory>
+            ${settings.localRepository}/org/owasp/dependency-check-data
+        </dataDirectory>
+
+        <nvdValidForHours>24</nvdValidForHours>
+    </configuration>
+</plugin>
 
         </plugins>
     </build>
