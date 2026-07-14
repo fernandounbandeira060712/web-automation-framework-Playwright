@@ -9,18 +9,20 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ui-tests:
+  quality-gate:
+    name: Tests and Quality Gates
     runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -33,53 +35,191 @@ jobs:
           java-version: 17
           cache: maven
 
+      - name: Application Health Check
+        shell: bash
+        run: |
+          APPLICATION_URL="https://automationexercise.com/"
+
+          echo "Checking application availability: ${APPLICATION_URL}"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --connect-timeout 15 \
+            --max-time 60 \
+            "${APPLICATION_URL}" \
+            --output /dev/null
+
+          echo "Application is available."
+
       - name: Install Playwright Browsers
-        run: mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          exec:java
+          -Dexec.mainClass=com.microsoft.playwright.CLI
+          -Dexec.args="install --with-deps"
 
       - name: Execute UI Tests
-        run: mvn clean test
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          clean test
 
       - name: Static Code Analysis - PMD
-        run: mvn pmd:check
+        if: always()
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          pmd:check
+
+      - name: Static Code Analysis - SpotBugs
+        if: always()
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          spotbugs:check
+
+      - name: Dependency Vulnerability Analysis
+        if: always()
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          dependency-check:check
 
       - name: Install Allure CLI
         if: always()
+        shell: bash
         run: |
-          wget https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
-          tar -zxvf allure-2.29.0.tgz
-          sudo mv allure-2.29.0 /opt/allure
-          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
-          allure --version
+          ALLURE_VERSION="2.29.0"
+          ALLURE_ARCHIVE="$RUNNER_TEMP/allure-${ALLURE_VERSION}.tgz"
+          ALLURE_DIRECTORY="$RUNNER_TEMP/allure-${ALLURE_VERSION}"
 
-      - name: Generate Allure Report
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz" \
+            --output "$ALLURE_ARCHIVE"
+
+          tar -xzf "$ALLURE_ARCHIVE" -C "$RUNNER_TEMP"
+
+          echo "${ALLURE_DIRECTORY}/bin" >> "$GITHUB_PATH"
+
+          "${ALLURE_DIRECTORY}/bin/allure" --version
+
+      - name: Generate Allure HTML Report
         if: always()
-        run: allure generate target/allure-results --clean -o target/allure-report
+        shell: bash
+        run: |
+          mkdir -p target/allure-results
+
+          allure generate \
+            target/allure-results \
+            --clean \
+            --output target/allure-report
+
+      - name: Verify Allure HTML Report
+        if: always()
+        shell: bash
+        run: |
+          test -f target/allure-report/index.html
+
+          echo "Allure Report generated successfully."
+          ls -la target/allure-report
 
       - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
+          name: allure-results-${{ github.run_number }}
           path: target/allure-results
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload Allure HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-html-report
+          name: allure-html-report-${{ github.run_number }}
           path: target/allure-report
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Playwright Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence-${{ github.run_number }}
+          path: |
+            target/traces
+            target/videos
+            target/surefire-reports
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Dependency Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report-${{ github.run_number }}
+          path: target/dependency-check
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Setup GitHub Pages
-        if: always() && github.event_name == 'push'
+        if: >
+          always() &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch')
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages Artifact
-        if: always() && github.event_name == 'push'
+        if: >
+          always() &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch')
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/allure-report
 
-      - name: Deploy to GitHub Pages
-        if: always() && github.event_name == 'push'
+  deploy-pages:
+    name: Deploy Allure Report
+    needs: quality-gate
+
+    if: >
+      always() &&
+      needs.quality-gate.result != 'cancelled' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy Allure Report to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
