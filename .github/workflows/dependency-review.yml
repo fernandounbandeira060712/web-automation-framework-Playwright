@@ -1,25 +1,334 @@
-name: Dependency Review
+name: UI Automation Quality Pipeline
 
 on:
+  push:
+    branches:
+      - main
+
   pull_request:
     branches:
       - main
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  dependency-review:
-    name: Review Dependency Changes
+  quality-gate:
+    name: Tests and Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Generate Dependency Check Cache Key
+        id: dependency-cache-key
+        shell: bash
+        run: |
+          echo "week=$(date +'%G-%V')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Dependency Check Database
+        id: dependency-check-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-
+            ${{ runner.os }}-dependency-check-v2-
+
+      - name: Show Dependency Check Cache Status
+        shell: bash
+        run: |
+          echo "Dependency-Check cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
+
+      - name: Application Health Check
+        shell: bash
+        run: |
+          APPLICATION_URL="https://automationexercise.com/"
+
+          echo "Checking application availability: ${APPLICATION_URL}"
+
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --connect-timeout 15 \
+            --max-time 60 \
+            "${APPLICATION_URL}" \
+            --output /dev/null
+
+          echo "Application is available."
+
+      - name: Install Playwright Browsers
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          exec:java
+          -Dexec.mainClass=com.microsoft.playwright.CLI
+          -Dexec.args="install --with-deps"
+
+      - name: Execute UI Tests
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          clean test
+
+      - name: Static Code Analysis - PMD
+        if: always()
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          pmd:check
+
+      - name: Static Code Analysis - SpotBugs
+        if: always()
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          spotbugs:check
+
+      - name: Validate NVD API Key
+        if: always()
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "::error::Repository secret NVD_API_KEY is not configured."
+            exit 1
+          fi
+
+          echo "NVD API Key is configured."
+
+      - name: Update Dependency Check Database
+        if: >
+          always() &&
+          steps.dependency-check-cache.outputs.cache-hit != 'true'
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          echo "No valid cache found."
+          echo "Downloading and rebuilding the NVD database."
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            dependency-check:update-only
+
+      - name: Save Dependency Check Database
+        if: >
+          always() &&
+          steps.dependency-check-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
+
+      - name: Dependency Vulnerability Analysis
+        if: always()
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        shell: bash
+        run: |
+          echo "Running dependency vulnerability analysis."
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            dependency-check:check
+
+      - name: Install Allure CLI
+        if: always()
+        shell: bash
+        run: |
+          ALLURE_VERSION="2.29.0"
+          ALLURE_ARCHIVE="$RUNNER_TEMP/allure-${ALLURE_VERSION}.tgz"
+          ALLURE_DIRECTORY="$RUNNER_TEMP/allure-${ALLURE_VERSION}"
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz" \
+            --output "$ALLURE_ARCHIVE"
+
+          tar -xzf "$ALLURE_ARCHIVE" -C "$RUNNER_TEMP"
+
+          echo "${ALLURE_DIRECTORY}/bin" >> "$GITHUB_PATH"
+
+          "${ALLURE_DIRECTORY}/bin/allure" --version
+
+      - name: Generate Allure HTML Report
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p target/allure-results
+
+          allure generate \
+            target/allure-results \
+            --clean \
+            --output target/allure-report
+
+      - name: Verify Allure HTML Report
+        if: always()
+        shell: bash
+        run: |
+          test -f target/allure-report/index.html
+
+          echo "Allure Report generated successfully."
+          ls -la target/allure-report
+
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ github.run_number }}
+          path: target/allure-results
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Allure HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-html-report-${{ github.run_number }}
+          path: target/allure-report
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Playwright Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence-${{ github.run_number }}
+          path: |
+            target/traces
+            target/videos
+            target/surefire-reports
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Dependency Check Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report-${{ github.run_number }}
+          path: target/dependency-check
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Setup GitHub Pages
+        if: >
+          always() &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch')
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages Artifact
+        if: >
+          always() &&
+          github.ref == 'refs/heads/main' &&
+          (github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch')
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/allure-report
+
+  codeql:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+          queries: security-extended
+          build-mode: manual
+
+      - name: Build Project for CodeQL
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          -DskipTests
+          test-compile
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:java-kotlin"
+
+  deploy-pages:
+    name: Deploy Allure Report
+
+    needs:
+      - quality-gate
+      - codeql
+
+    if: >
+      always() &&
+      needs.quality-gate.result != 'cancelled' &&
+      needs.codeql.result != 'cancelled' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
+
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
-      - name: Review Dependency Changes
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy Allure Report to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
