@@ -29,7 +29,7 @@
         <wiremock.version>3.9.1</wiremock.version>
         <testcontainers.version>1.20.4</testcontainers.version>
 
-        <dependency-check.version>12.1.0</dependency-check.version>
+        <dependency-check.version>12.2.2</dependency-check.version>
     </properties>
 
     <dependencies>
@@ -244,6 +244,12 @@
         <skipProvidedScope>true</skipProvidedScope>
         <skipTestScope>true</skipTestScope>
 
+        <nvdApiKeyEnvironmentVariable>
+            NVD_API_KEY
+        </nvdApiKeyEnvironmentVariable>
+
+        <nvdValidForHours>24</nvdValidForHours>
+
         <formats>
             <format>HTML</format>
             <format>JSON</format>
@@ -257,8 +263,6 @@
         <dataDirectory>
             ${settings.localRepository}/org/owasp/dependency-check-data
         </dataDirectory>
-
-        <nvdValidForHours>24</nvdValidForHours>
     </configuration>
 </plugin>
 
