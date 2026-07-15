@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -127,6 +129,36 @@ jobs:
           --batch-mode
           --no-transfer-progress
           spotbugs:check
+
+      - name: Validate SonarQube Cloud Token
+        if: always()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::error::Repository secret SONAR_TOKEN is not configured."
+            exit 1
+          fi
+
+          echo "SONAR_TOKEN is configured."
+
+      - name: SonarQube Cloud Analysis and Quality Gate
+        if: always()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            test-compile \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar \
+            -Dsonar.organization=fernandounbandeira060712 \
+            -Dsonar.projectKey=fernandounbandeira060712_web-automation-framework-Playwright \
+            -Dsonar.qualitygate.wait=true \
+            -Dsonar.qualitygate.timeout=300
 
       - name: Validate NVD API Key
         if: always()
@@ -347,6 +379,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Java 17
         uses: actions/setup-java@v4

@@ -13,9 +13,13 @@
     <name>QA Enterprise Automation Framework</name>
 
     <properties>
+
+        <!-- Java -->
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <!-- Dependencies -->
         <junit.version>5.11.0</junit.version>
         <playwright.version>1.49.0</playwright.version>
         <restassured.version>5.5.0</restassured.version>
@@ -29,17 +33,78 @@
         <wiremock.version>3.9.1</wiremock.version>
         <testcontainers.version>1.20.4</testcontainers.version>
 
+        <!-- Quality and security tools -->
         <dependency-check.version>12.2.2</dependency-check.version>
+        <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
+
+        <!-- SonarQube Cloud identification -->
+        <sonar.organization>
+            fernandounbandeira060712
+        </sonar.organization>
+
+        <sonar.projectKey>
+            fernandounbandeira060712_web-automation-framework-Playwright
+        </sonar.projectKey>
+
+        <sonar.host.url>
+            https://sonarcloud.io
+        </sonar.host.url>
+
+        <!--
+            O projeto ainda mantém framework e testes em src/test/java.
+            O código do framework será considerado source.
+        -->
+        <sonar.sources>
+            src/test/java
+        </sonar.sources>
+
+        <!-- Classes de teste JUnit -->
+        <sonar.tests>
+            src/test/java/br/com/fernandouchoa/qa/ui/tests
+        </sonar.tests>
+
+        <!-- Evita que os testes também sejam contados como código de produção -->
+        <sonar.exclusions>
+            src/test/java/br/com/fernandouchoa/qa/ui/tests/**
+        </sonar.exclusions>
+
+        <sonar.test.inclusions>
+            src/test/java/br/com/fernandouchoa/qa/ui/tests/**
+        </sonar.test.inclusions>
+
+        <!-- As classes Java são compiladas em target/test-classes -->
+        <sonar.java.binaries>
+            ${project.build.testOutputDirectory}
+        </sonar.java.binaries>
+
+        <sonar.java.test.binaries>
+            ${project.build.testOutputDirectory}
+        </sonar.java.test.binaries>
+
+        <!-- Não publicar arquivos gerados -->
+        <sonar.coverage.exclusions>
+            **/locators/**,
+            **/config/**,
+            **/constants/**,
+            **/model/**
+        </sonar.coverage.exclusions>
+
+        <sonar.cpd.exclusions>
+            **/locators/**
+        </sonar.cpd.exclusions>
+
     </properties>
 
     <dependencies>
 
+        <!-- Playwright -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
             <version>${playwright.version}</version>
         </dependency>
 
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -47,6 +112,7 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- REST Assured -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -54,12 +120,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Jackson -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
 
+        <!-- Allure -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
@@ -67,12 +135,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- AspectJ -->
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
             <version>${aspectj.version}</version>
         </dependency>
 
+        <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -85,6 +155,7 @@
             <version>${logback.version}</version>
         </dependency>
 
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -92,6 +163,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- WireMock -->
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
@@ -99,6 +171,7 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Testcontainers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -126,6 +199,7 @@
 
                 <configuration>
                     <release>${java.version}</release>
+                    <debug>true</debug>
                 </configuration>
             </plugin>
 
@@ -138,6 +212,7 @@
                 <configuration>
                     <useModulePath>false</useModulePath>
 
+                    <!-- Mantém o controle de execução já estabilizado -->
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
 
@@ -253,6 +328,13 @@
                         ${settings.localRepository}/org/owasp/dependency-check-data
                     </dataDirectory>
                 </configuration>
+            </plugin>
+
+            <!-- SonarScanner for Maven -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
             </plugin>
 
         </plugins>
