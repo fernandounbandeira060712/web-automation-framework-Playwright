@@ -1,6 +1,7 @@
 package br.com.fernandouchoa.qa.utils;
 
 import java.io.ByteArrayInputStream;
+import java.util.stream.Stream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -101,15 +102,13 @@ public final class AllureUtils {
     }
 
     private static void delete(Path path) {
-
         if (!Files.exists(path)) {
             return;
         }
 
-        try {
-            Files.walk(path)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(AllureUtils::deleteFile);
+        try (Stream<Path> paths = Files.walk(path)) {
+            paths.sorted(Comparator.reverseOrder())
+                 .forEach(AllureUtils::deleteFile);
         } catch (IOException ignored) {
         }
     }
