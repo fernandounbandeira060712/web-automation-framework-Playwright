@@ -122,6 +122,22 @@ jobs:
           --no-transfer-progress
           clean test
 
+      - name: Generate JaCoCo Coverage Report
+        run: >
+          mvn
+          --batch-mode
+          --no-transfer-progress
+          jacoco:report
+
+      - name: Verify JaCoCo Coverage Report
+        shell: bash
+        run: |
+          test -f target/site/jacoco/jacoco.xml
+          test -f target/site/jacoco/index.html
+
+          echo "JaCoCo coverage report generated successfully."
+          ls -la target/site/jacoco
+
       - name: Static Code Analysis - PMD
         if: always()
         run: >
@@ -353,6 +369,15 @@ jobs:
         with:
           name: dependency-check-report-${{ github.run_number }}
           path: target/dependency-check
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload JaCoCo Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report-${{ github.run_number }}
+          path: target/site/jacoco
           if-no-files-found: warn
           retention-days: 30
 

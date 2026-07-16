@@ -36,6 +36,10 @@
         <!-- Quality and security tools -->
         <dependency-check.version>12.2.2</dependency-check.version>
         <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
+        <jacoco.version>0.8.14</jacoco.version>
+
+        <!-- Previne falha do Surefire caso o agente JaCoCo não seja inicializado -->
+        <jacocoArgLine></jacocoArgLine>
 
         <!-- SonarQube Cloud identification -->
         <sonar.organization>
@@ -50,36 +54,31 @@
             https://sonarcloud.io
         </sonar.host.url>
 
-        <!--
-            O projeto ainda mantém framework e testes em src/test/java.
-            O código do framework será considerado source.
-        -->
+        <!-- Estrutura padrão Maven -->
         <sonar.sources>
-            src/test/java
+            src/main/java
         </sonar.sources>
 
-        <!-- Classes de teste JUnit -->
         <sonar.tests>
-            src/test/java/br/com/fernandouchoa/qa/ui/tests
+            src/test/java
         </sonar.tests>
 
-        <!-- Evita que os testes também sejam contados como código de produção -->
-        <sonar.exclusions>
-            src/test/java/br/com/fernandouchoa/qa/ui/tests/**
-        </sonar.exclusions>
-
         <sonar.test.inclusions>
-            src/test/java/br/com/fernandouchoa/qa/ui/tests/**
+            src/test/java/**
         </sonar.test.inclusions>
 
-        <!-- As classes Java são compiladas em target/test-classes -->
         <sonar.java.binaries>
-            ${project.build.testOutputDirectory}
+            ${project.build.outputDirectory}
         </sonar.java.binaries>
 
         <sonar.java.test.binaries>
             ${project.build.testOutputDirectory}
         </sonar.java.test.binaries>
+
+        <!-- Relatório XML gerado pelo JaCoCo -->
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
 
         <!-- Não publicar arquivos gerados -->
         <sonar.coverage.exclusions>
@@ -216,6 +215,63 @@
                 </configuration>
             </plugin>
 
+            <!-- JaCoCo Code Coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+
+                <configuration>
+                    <destFile>
+                        ${project.build.directory}/jacoco.exec
+                    </destFile>
+
+                    <dataFile>
+                        ${project.build.directory}/jacoco.exec
+                    </dataFile>
+
+                    <outputDirectory>
+                        ${project.reporting.outputDirectory}/jacoco
+                    </outputDirectory>
+
+                    <formats>
+                        <format>HTML</format>
+                        <format>XML</format>
+                        <format>CSV</format>
+                    </formats>
+
+                    <excludes>
+                        <exclude>**/locators/**</exclude>
+                        <exclude>**/config/**</exclude>
+                        <exclude>**/constants/**</exclude>
+                        <exclude>**/model/**</exclude>
+                    </excludes>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>prepare-jacoco-agent</id>
+
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+
+                        <configuration>
+                            <propertyName>jacocoArgLine</propertyName>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>generate-jacoco-report</id>
+                        <phase>verify</phase>
+
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- JUnit and Allure execution -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -230,6 +286,7 @@
                     <reuseForks>true</reuseForks>
 
                     <argLine>
+                        @{jacocoArgLine}
                         -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
                     </argLine>
 
