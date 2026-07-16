@@ -23,7 +23,7 @@
         <junit.version>5.11.0</junit.version>
         <playwright.version>1.49.0</playwright.version>
         <restassured.version>5.5.0</restassured.version>
-        <allure.version>2.29.0</allure.version>
+        <allure.version>2.35.3</allure.version>
         <aspectj.version>1.9.22.1</aspectj.version>
 
         <jackson.version>2.22.1</jackson.version>
@@ -130,7 +130,7 @@
         <!-- Allure -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
-            	<artifactId>allure-junit5</artifactId>
+            	<artifactId>allure-jupiter</artifactId>
            		<version>${allure.version}</version>
             <scope>test</scope>
         </dependency>
