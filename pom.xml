@@ -134,15 +134,22 @@
             <version>${allure.version}</version>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Allure annotations and attachments used by framework classes -->
+		<dependency>
+    		<groupId>io.qameta.allure</groupId>
+   			 <artifactId>allure-java-commons</artifactId>
+   			 <version>${allure.version}</version>
+		</dependency>
 
-        <!-- AspectJ -->
+		<!-- AspectJ -->
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
             <version>${aspectj.version}</version>
         </dependency>
 
-        <!-- Logging -->
+		<!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -155,7 +162,7 @@
             <version>${logback.version}</version>
         </dependency>
 
-        <!-- Lombok -->
+		<!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -163,7 +170,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- WireMock -->
+		<!-- WireMock -->
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock</artifactId>
@@ -171,7 +178,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Testcontainers -->
+		<!-- Testcontainers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
