@@ -1,9 +1,7 @@
 package br.com.fernandouchoa.qa.core.factory;
 
 import java.nio.file.Paths;
-
-import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
-import br.com.fernandouchoa.qa.core.driver.DriverManager;
+import java.util.Locale;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
@@ -12,29 +10,36 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Tracing;
 
+import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
+import br.com.fernandouchoa.qa.core.driver.DriverManager;
+
 public final class PlaywrightFactory {
 
     private PlaywrightFactory() {
     }
 
     public static void createInstance() {
-
         Playwright playwright = Playwright.create();
 
         BrowserType.LaunchOptions options =
                 new BrowserType.LaunchOptions()
                         .setHeadless(EnvironmentManager.isHeadless());
 
-        Browser browser = launchBrowser(playwright, options);
+        Browser browser =
+                launchBrowser(playwright, options);
 
         BrowserContext context =
                 browser.newContext(
                         new Browser.NewContextOptions()
-                                .setRecordVideoDir(Paths.get("target", "videos"))
+                                .setRecordVideoDir(
+                                        Paths.get("target", "videos")
+                                )
                                 .setRecordVideoSize(1280, 720)
                 );
 
-        context.setDefaultTimeout(EnvironmentManager.getTimeout());
+        context.setDefaultTimeout(
+                EnvironmentManager.getTimeout()
+        );
 
         context.tracing().start(
                 new Tracing.StartOptions()
@@ -56,7 +61,6 @@ public final class PlaywrightFactory {
     }
 
     public static void closeInstance() {
-
         if (DriverManager.getPage() != null) {
             DriverManager.getPage().close();
         }
@@ -80,10 +84,10 @@ public final class PlaywrightFactory {
             Playwright playwright,
             BrowserType.LaunchOptions options) {
 
-        String browserName = EnvironmentManager.getBrowser();
+        String browserName =
+                EnvironmentManager.getBrowser();
 
-        switch (browserName.toLowerCase()) {
-
+        switch (browserName.toLowerCase(Locale.ROOT)) {
             case "firefox":
                 return playwright.firefox().launch(options);
 
@@ -95,7 +99,8 @@ public final class PlaywrightFactory {
 
             default:
                 throw new IllegalArgumentException(
-                        "Browser não suportado: " + browserName);
+                        "Browser não suportado: " + browserName
+                );
         }
     }
 }

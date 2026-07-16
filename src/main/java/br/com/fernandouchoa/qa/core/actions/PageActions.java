@@ -6,11 +6,16 @@ import com.microsoft.playwright.options.WaitUntilState;
 
 import br.com.fernandouchoa.qa.core.config.EnvironmentManager;
 import br.com.fernandouchoa.qa.utils.WaitUtils;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public class PageActions {
 
     private final Page page;
 
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "A instância Page do Playwright precisa ser compartilhada entre os objetos do framework."
+    )
     public PageActions(Page page) {
         this.page = page;
     }

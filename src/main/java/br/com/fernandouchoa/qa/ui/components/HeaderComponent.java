@@ -8,6 +8,7 @@ import br.com.fernandouchoa.qa.ui.locators.HeaderLocators;
 import br.com.fernandouchoa.qa.ui.pages.CartPage;
 import br.com.fernandouchoa.qa.ui.pages.LoginPage;
 import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.qameta.allure.Step;
 
 public class HeaderComponent {
@@ -15,6 +16,10 @@ public class HeaderComponent {
     private final Page page;
     private final PageActions actions;
 
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "A instância Page do Playwright precisa ser compartilhada com páginas e componentes."
+    )
     public HeaderComponent(Page page) {
         this.page = page;
         this.actions = new PageActions(page);
@@ -39,6 +44,8 @@ public class HeaderComponent {
     }
 
     private void navigateTo(String path) {
-        actions.navigateTo(EnvironmentManager.getBaseUrl() + path);
+        actions.navigateTo(
+                EnvironmentManager.getBaseUrl() + path
+        );
     }
 }
