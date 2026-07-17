@@ -88,11 +88,43 @@ jobs:
           -Dexec.args="install --with-deps"
 
       - name: Execute UI Tests
-        run: >
-          mvn
-          --batch-mode
-          --no-transfer-progress
-          clean test
+        shell: bash
+        run: |
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            clean test \
+            -Dallure.results.directory="$GITHUB_WORKSPACE/target/allure-results"
+
+      - name: Verify Test and Allure Results
+        if: always()
+        shell: bash
+        run: |
+          echo "Checking Surefire reports..."
+
+          if [ -d "target/surefire-reports" ]; then
+            find target/surefire-reports -maxdepth 2 -type f -print
+          else
+            echo "::warning::Surefire reports directory was not generated."
+          fi
+
+          echo "Checking Allure results..."
+
+          if [ ! -d "target/allure-results" ]; then
+            echo "::error::The target/allure-results directory was not generated."
+            exit 1
+          fi
+
+          RESULT_COUNT="$(find target/allure-results -type f | wc -l)"
+
+          echo "Allure result files found: ${RESULT_COUNT}"
+
+          if [ "$RESULT_COUNT" -eq 0 ]; then
+            echo "::error::The Allure results directory exists but contains no result files."
+            exit 1
+          fi
+
+          find target/allure-results -maxdepth 2 -type f -print
 
       - name: Static Code Analysis - PMD
         if: always()
@@ -187,7 +219,11 @@ jobs:
         if: always()
         shell: bash
         run: |
-          mkdir -p target/allure-results
+          if [ ! -d "target/allure-results" ] ||
+             [ -z "$(find target/allure-results -type f -print -quit)" ]; then
+            echo "::warning::No Allure result files were generated."
+            exit 0
+          fi
 
           allure generate \
             target/allure-results \
@@ -198,10 +234,19 @@ jobs:
         if: always()
         shell: bash
         run: |
-          test -f target/allure-report/index.html
+          if [ ! -f "target/allure-report/index.html" ]; then
+            echo "::warning::Allure HTML Report was not generated."
+            exit 0
+          fi
 
           echo "Allure Report generated successfully."
-          ls -la target/allure-report
+
+          find \
+            target/allure-report \
+            -maxdepth 2 \
+            -type f \
+            -print |
+            head -50
 
       - name: Upload Allure Results
         if: always()
@@ -209,7 +254,7 @@ jobs:
         with:
           name: allure-results-${{ github.run_number }}
           path: target/allure-results
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Upload Allure HTML Report
@@ -218,7 +263,7 @@ jobs:
         with:
           name: allure-html-report-${{ github.run_number }}
           path: target/allure-report
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Upload Playwright Evidence
@@ -247,7 +292,8 @@ jobs:
           always() &&
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'push' ||
-          github.event_name == 'workflow_dispatch')
+          github.event_name == 'workflow_dispatch') &&
+          hashFiles('target/allure-report/index.html') != ''
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages Artifact
@@ -255,7 +301,8 @@ jobs:
           always() &&
           github.ref == 'refs/heads/main' &&
           (github.event_name == 'push' ||
-          github.event_name == 'workflow_dispatch')
+          github.event_name == 'workflow_dispatch') &&
+          hashFiles('target/allure-report/index.html') != ''
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/allure-report
@@ -310,8 +357,8 @@ jobs:
 
     if: >
       always() &&
-      needs.quality-gate.result != 'cancelled' &&
-      needs.codeql.result != 'cancelled' &&
+      needs.quality-gate.result == 'success' &&
+      needs.codeql.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
