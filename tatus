@@ -1,5 +1,0 @@
-[33mfe63e74[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m refactor: standardize cart and products pages
-[33m59e0195[m refactor: stabilize base test and UI scenarios
-[33md3bd853[m refactor: centralize wait timeout configuration
-[33m6180243[m chore: remove generated Allure files from repository
-[33m890372d[m[33m ([m[1;31morigin/main[m[33m)[m ci: generate Allure report with CLI for GitHub Pages
