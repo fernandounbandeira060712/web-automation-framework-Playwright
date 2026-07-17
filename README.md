@@ -1,3 +1,11 @@
+<p align="center">
+  <img
+    src="docs/images/banner.png"
+    alt="QA Enterprise Automation Framework"
+    width="100%"
+  />
+</p>
+<br>
 <div align="center">
 
 # QA Enterprise Automation Framework
@@ -120,41 +128,82 @@ Mais do que validar funcionalidades, este framework busca representar a forma co
 
 # 🏗️ Arquitetura do Framework
 
-Este projeto foi desenvolvido utilizando uma arquitetura em camadas, onde cada módulo possui uma responsabilidade específica.
+Este framework foi projetado seguindo princípios de Engenharia de Software, adotando uma arquitetura modular e orientada à separação de responsabilidades. Cada camada possui uma função específica, permitindo maior reutilização, baixo acoplamento, facilidade de manutenção e evolução contínua.
 
-Essa separação reduz o acoplamento, facilita a manutenção e permite que novas funcionalidades sejam incorporadas sem impactar os demais componentes da aplicação.
+```mermaid
+flowchart TD
 
-```text
-                 Testes (JUnit 5)
-                       │
-                       ▼
-                 BaseTest
-                       │
-                       ▼
-               Page Objects
-                       │
-                       ▼
-            Component Objects
-                       │
-                       ▼
-              Page Actions
-                       │
-                       ▼
-             Driver Manager
-                       │
-                       ▼
-                 Playwright
-                       │
-                       ▼
-                  Navegador
+    %% ===========================
+    %% Continuous Integration
+    %% ===========================
+
+    A[GitHub Actions CI]
+
+    A --> B[Maven Build]
+    B --> C[Automated Tests]
+    C --> D[Static Analysis]
+
+    D --> D1[PMD]
+    D --> D2[SpotBugs]
+    D --> D3[CodeQL]
+    D --> D4[OWASP Dependency Check]
+
+    %% ===========================
+    %% Test Framework
+    %% ===========================
+
+    C --> E[JUnit 5]
+
+    E --> F[Extensions & Listeners]
+    E --> G[Retry Extension]
+
+    G -. Retry Failed Tests .-> E
+
+    E --> H[BaseTest]
+
+    H --> I[Driver Manager<br/>ThreadLocal]
+
+    I --> J[Parallel Execution<br/>3 Workers]
+
+    J --> K1[Worker 1]
+    J --> K2[Worker 2]
+    J --> K3[Worker 3]
+
+    K1 --> L[Page Actions]
+    K2 --> L
+    K3 --> L
+
+    L --> M[Page Objects]
+    L --> N[Component Objects]
+
+    M --> O[Playwright Engine]
+    N --> O
+
+    O --> P[Browser]
+
+    %% ===========================
+    %% Evidence
+    %% ===========================
+
+    F --> Q[Screenshots]
+    F --> R[Execution Videos]
+    F --> S[Playwright Trace]
+
+    Q --> T[Allure Report]
+    R --> T
+    S --> T
+
+    T --> U[GitHub Artifacts]
+
+    U --> V[GitHub Pages]
 ```
 
 > 💡 **Princípio da Arquitetura**
 
-> Cada camada possui uma responsabilidade específica e pode evoluir de forma independente, reduzindo acoplamento e aumentando a reutilização do código.
-# 📂 Estrutura do Projeto
+> Cada camada possui uma responsabilidade bem definida, permitindo que o framework evolua de forma independente, mantendo alta coesão, baixo acoplamento e maior escalabilidade.
 
-```
+---
+# 📂 Estrutura do Projeto
 
 ```text
 src
@@ -192,6 +241,8 @@ Cada camada possui uma responsabilidade única, tornando o framework mais organi
 > 💡 **Organização do Projeto**
 
 > A estrutura foi planejada para separar claramente código de produção, código de testes e componentes reutilizáveis, tornando a manutenção simples mesmo em projetos de grande porte.
+
+---
 
 # ⭐ Principais Características
 
@@ -341,9 +392,71 @@ A pipeline executa:
 - ✅ PMD
 - ✅ SpotBugs
 - ✅ Dependency Check
-- ✅ CodeQL
+- ✅ CodeQL Analysis
 
 Esse fluxo garante que cada alteração passe por validações de qualidade, segurança e execução automatizada antes de ser considerada estável.
+
+---
+
+## 🔄 Fluxo Automatizado de Integração
+
+O projeto utiliza GitHub Actions e Dependabot para automatizar validações, segurança e manutenção das dependências.
+
+### Fluxo de desenvolvimento
+
+```text
+Desenvolvimento (dev)
+        │
+        ▼
+ Commit + Push
+        │
+        ▼
+ Pull Request
+        │
+        ▼
+ GitHub Actions
+        │
+        ├── Maven Build
+        ├── Automated Tests
+        ├── Retry
+        ├── PMD
+        ├── SpotBugs
+        ├── Dependency Review
+        ├── OWASP Dependency Check
+        ├── CodeQLCodeQL Analysis
+        ├── Allure Report
+        └── Playwright Artifacts
+        │
+        ▼
+Code Review
+        │
+        ▼
+Merge
+        │
+        ▼
+Main
+        │
+        ▼
+Publish Allure Report
+```
+
+### Automações disponíveis
+
+| Automação | Comportamento |
+|------------|---------------|
+| GitHub Actions | Executa automaticamente as validações em Pull Requests direcionados à `main` |
+| Validação pós-merge | Executa novamente a pipeline após alterações integradas à `main` |
+| Dependabot Version Updates | Verifica periodicamente novas versões das dependências Maven |
+| Dependabot GitHub Actions | Verifica periodicamente atualizações das actions utilizadas nos workflows |
+| Pull Requests do Dependabot | Cria automaticamente PRs quando encontra atualizações disponíveis |
+| Dependency Review | Analisa alterações de dependências introduzidas por Pull Requests |
+| CodeQL | Realiza análise estática de segurança |
+| OWASP Dependency Check | Identifica vulnerabilidades conhecidas nas bibliotecas |
+| Allure Report | Consolida resultados, tempos de execução e evidências |
+| GitHub Pages Deployment | Publica o relatório Allure após execução na branch `main` |
+| GitHub Notifications | O GitHub pode notificar falhas da pipeline conforme as preferências do usuário |
+
+> ℹ️ O envio de commits para a branch `dev` não cria automaticamente um Pull Request. O PR para a branch `main` deve ser aberto pelo responsável pela alteração.
 
 ---
 
@@ -365,39 +478,48 @@ Essas verificações são executadas automaticamente durante a pipeline, contrib
 
 # 🗺️ Roadmap
 
-## Concluído
+## ✅ Concluído
 
-- ✅ Arquitetura em camadas
-- ✅ Playwright
+- ✅ Arquitetura em Camadas
 - ✅ Java 17
+- ✅ Playwright
 - ✅ JUnit 5
-- ✅ Component Object Model
-- ✅ Page Object Model
-- ✅ ThreadLocal Driver
-- ✅ Execução paralela
-- ✅ GitHub Actions
-- ✅ Allure Reports
-- ✅ PMD
-- ✅ SpotBugs
-- ✅ Dependency Check
-- ✅ CodeQL
-- ✅ Git Flow
+- ✅ Maven
+- ✅ Page Object Model (POM)
+- ✅ Component Object Model (COM)
+- ✅ BaseTest
+- ✅ ThreadLocal Driver Manager
+- ✅ Execução Paralela (3 Workers)
 - ✅ Retry Automático
+- ✅ Listeners e Extensions
+- ✅ Git Flow
+- ✅ GitHub Actions CI
+- ✅ Allure Reports
 - ✅ Screenshots Automáticos
 - ✅ Vídeos da Execução
 - ✅ Playwright Trace
+- ✅ GitHub Artifacts
+- ✅ GitHub Pages Deployment
+- ✅ PMD
+- ✅ SpotBugs
+- ✅ OWASP Dependency Check
+- ✅ CodeQL
 
 ---
 
-## Próximas evoluções
+## 🚀 Próximas Evoluções
 
-- 🚧 Integração com SonarQube
+- 🚧 SonarQube Cloud
 - 🚧 JaCoCo Code Coverage
-- ⏳ Docker
+- ⏳ Docker Support
 - ⏳ TestContainers
-- ⏳ Execução distribuída
-- ⏳ Dashboard de métricas
-
+- ⏳ Selenium Grid
+- ⏳ Remote Execution
+- ⏳ BrowserStack Integration
+- ⏳ Azure DevOps Pipeline
+- ⏳ Cross-Browser Matrix Execution
+- ⏳ Slack / Microsoft Teams Notifications
+  
 ---
 
 # 🤝 Contribuindo
