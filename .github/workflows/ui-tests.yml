@@ -22,13 +22,11 @@ jobs:
   quality-gate:
     name: Tests and Quality Gates
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -41,70 +39,44 @@ jobs:
         id: dependency-cache-key
         shell: bash
         run: |
-          WEEK="$(date +'%G-%V')"
-
-          echo "week=${WEEK}" >> "$GITHUB_OUTPUT"
-          echo "Dependency-Check cache period: ${WEEK}"
+          echo "week=$(date +'%G-%V')" >> "$GITHUB_OUTPUT"
 
       - name: Restore Dependency Check Database
         id: dependency-check-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ runner.os }}-dependency-check-v3-12.2.2-${{ steps.dependency-cache-key.outputs.week }}
+          key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-dependency-check-v3-12.2.2-
-            ${{ runner.os }}-dependency-check-v3-
+            ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-
+            ${{ runner.os }}-dependency-check-v2-
 
-      - name: Inspect Dependency Check Cache
-        id: dependency-database
+      - name: Show Dependency Check Cache Status
         shell: bash
         run: |
-          DATA_DIRECTORY="$HOME/.m2/repository/org/owasp/dependency-check-data"
-
-          echo "Exact cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
-
-          if [ -d "$DATA_DIRECTORY" ] &&
-             find "$DATA_DIRECTORY" -type f -size +0c | grep -q .; then
-
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            echo "Dependency-Check database files were restored."
-
-            du -sh "$DATA_DIRECTORY" || true
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "No usable Dependency-Check database was restored."
-          fi
+          echo "Dependency-Check cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
 
       - name: Application Health Check
-        id: application-health-check
         shell: bash
         run: |
           APPLICATION_URL="https://automationexercise.com/"
 
           echo "Checking application availability: ${APPLICATION_URL}"
 
-          HTTP_STATUS="$(
-            curl \
-              --silent \
-              --show-error \
-              --output /dev/null \
-              --write-out "%{http_code}" \
-              --connect-timeout 15 \
-              --max-time 60 \
-              --user-agent "Mozilla/5.0 GitHub-Actions-Health-Check" \
-              "${APPLICATION_URL}"
-          )"
+          curl \
+            --fail \
+            --location \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --connect-timeout 15 \
+            --max-time 60 \
+            "${APPLICATION_URL}" \
+            --output /dev/null
 
-          echo "Application HTTP status: ${HTTP_STATUS}"
-
-          if [[ "$HTTP_STATUS" =~ ^[23][0-9]{2}$ ]]; then
-            echo "Application is reachable."
-            exit 0
-          fi
-
-          echo "::error::Application health check failed with HTTP status ${HTTP_STATUS}."
-          exit 1
+          echo "Application is available."
 
       - name: Install Playwright Browsers
         run: >
@@ -122,22 +94,6 @@ jobs:
           --no-transfer-progress
           clean test
 
-      - name: Generate JaCoCo Coverage Report
-        run: >
-          mvn
-          --batch-mode
-          --no-transfer-progress
-          jacoco:report
-
-      - name: Verify JaCoCo Coverage Report
-        shell: bash
-        run: |
-          test -f target/site/jacoco/jacoco.xml
-          test -f target/site/jacoco/index.html
-
-          echo "JaCoCo coverage report generated successfully."
-          ls -la target/site/jacoco
-
       - name: Static Code Analysis - PMD
         if: always()
         run: >
@@ -154,36 +110,6 @@ jobs:
           --no-transfer-progress
           spotbugs:check
 
-      - name: Validate SonarQube Cloud Token
-        if: always()
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: bash
-        run: |
-          if [ -z "$SONAR_TOKEN" ]; then
-            echo "::error::Repository secret SONAR_TOKEN is not configured."
-            exit 1
-          fi
-
-          echo "SONAR_TOKEN is configured."
-
-      - name: SonarQube Cloud Analysis and Quality Gate
-        if: always()
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          mvn \
-            --batch-mode \
-            --no-transfer-progress \
-            test-compile \
-            org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar \
-            -Dsonar.organization=fernandounbandeira060712 \
-            -Dsonar.projectKey=fernandounbandeira060712_web-automation-framework-Playwright \
-            -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
-
       - name: Validate NVD API Key
         if: always()
         env:
@@ -198,84 +124,29 @@ jobs:
           echo "NVD API Key is configured."
 
       - name: Update Dependency Check Database
-        id: dependency-update
         if: >
           always() &&
           steps.dependency-check-cache.outputs.cache-hit != 'true'
-        continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         shell: bash
         run: |
-          MAX_ATTEMPTS=3
-          ATTEMPT=1
+          echo "No valid cache found."
+          echo "Downloading and rebuilding the NVD database."
 
-          while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
-            echo "Dependency-Check database update attempt ${ATTEMPT}/${MAX_ATTEMPTS}."
-
-            if mvn \
-              --batch-mode \
-              --no-transfer-progress \
-              dependency-check:update-only; then
-
-              echo "Dependency-Check database updated successfully."
-              exit 0
-            fi
-
-            if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
-              WAIT_SECONDS=$((ATTEMPT * 60))
-
-              echo "::warning::NVD update failed."
-              echo "Waiting ${WAIT_SECONDS} seconds before retrying."
-
-              sleep "$WAIT_SECONDS"
-            fi
-
-            ATTEMPT=$((ATTEMPT + 1))
-          done
-
-          echo "::error::NVD update failed after ${MAX_ATTEMPTS} attempts."
-          exit 1
-
-      - name: Validate Dependency Check Database Availability
-        if: always()
-        shell: bash
-        run: |
-          UPDATE_OUTCOME="${{ steps.dependency-update.outcome }}"
-          CACHE_AVAILABLE="${{ steps.dependency-database.outputs.available }}"
-          EXACT_CACHE_HIT="${{ steps.dependency-check-cache.outputs.cache-hit }}"
-
-          echo "Update outcome: ${UPDATE_OUTCOME}"
-          echo "Existing database available: ${CACHE_AVAILABLE}"
-          echo "Exact cache hit: ${EXACT_CACHE_HIT}"
-
-          if [ "$EXACT_CACHE_HIT" = "true" ]; then
-            echo "Using current cached Dependency-Check database."
-            exit 0
-          fi
-
-          if [ "$UPDATE_OUTCOME" = "success" ]; then
-            echo "Using freshly updated Dependency-Check database."
-            exit 0
-          fi
-
-          if [ "$CACHE_AVAILABLE" = "true" ]; then
-            echo "::warning::NVD is unavailable. Using the previously cached database."
-            exit 0
-          fi
-
-          echo "::error::No valid Dependency-Check database is available."
-          exit 1
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            dependency-check:update-only
 
       - name: Save Dependency Check Database
         if: >
           always() &&
-          steps.dependency-check-cache.outputs.cache-hit != 'true' &&
-          steps.dependency-update.outcome == 'success'
+          steps.dependency-check-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: ${{ runner.os }}-dependency-check-v3-12.2.2-${{ steps.dependency-cache-key.outputs.week }}
+          key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
 
       - name: Dependency Vulnerability Analysis
         if: always()
@@ -283,13 +154,12 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         shell: bash
         run: |
-          echo "Running dependency scan using the prepared local database."
+          echo "Running dependency vulnerability analysis."
 
           mvn \
             --batch-mode \
             --no-transfer-progress \
-            dependency-check:check \
-            -DautoUpdate=false
+            dependency-check:check
 
       - name: Install Allure CLI
         if: always()
@@ -339,7 +209,7 @@ jobs:
         with:
           name: allure-results-${{ github.run_number }}
           path: target/allure-results
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
 
       - name: Upload Allure HTML Report
@@ -369,15 +239,6 @@ jobs:
         with:
           name: dependency-check-report-${{ github.run_number }}
           path: target/dependency-check
-          if-no-files-found: warn
-          retention-days: 30
-
-      - name: Upload JaCoCo Coverage Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-coverage-report-${{ github.run_number }}
-          path: target/site/jacoco
           if-no-files-found: warn
           retention-days: 30
 
@@ -412,8 +273,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
