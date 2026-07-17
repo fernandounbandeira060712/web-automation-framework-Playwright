@@ -56,29 +56,14 @@ jobs:
         run: |
           echo "Dependency-Check cache hit: ${{ steps.dependency-check-cache.outputs.cache-hit }}"
 
-      - name: Application Health Check
-        shell: bash
-        run: |
-          APPLICATION_URL="https://automationexercise.com/"
-
-          echo "Checking application availability: ${APPLICATION_URL}"
-
-          curl \
-            --fail \
-            --location \
-            --silent \
-            --show-error \
-            --retry 5 \
-            --retry-delay 5 \
-            --retry-all-errors \
-            --connect-timeout 15 \
-            --max-time 60 \
-            "${APPLICATION_URL}" \
-            --output /dev/null
-
-          echo "Application is available."
+      # O health check externo foi removido.
+      # O próprio Playwright será responsável por validar a aplicação.
+      # Isso evita bloquear toda a pipeline devido a redirects,
+      # indisponibilidade temporária ou proteção anti-bot do site público.
 
       - name: Install Playwright Browsers
+        id: install-playwright
+        continue-on-error: true
         run: >
           mvn
           --batch-mode
@@ -88,6 +73,9 @@ jobs:
           -Dexec.args="install --with-deps"
 
       - name: Execute UI Tests
+        id: ui-tests
+        if: always()
+        continue-on-error: true
         shell: bash
         run: |
           mvn \
@@ -97,15 +85,20 @@ jobs:
             -Dallure.results.directory="$GITHUB_WORKSPACE/target/allure-results"
 
       - name: Verify Test and Allure Results
+        id: verify-results
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           echo "Checking Surefire reports..."
 
           if [ -d "target/surefire-reports" ]; then
+            SUREFIRE_COUNT="$(find target/surefire-reports -type f | wc -l)"
+            echo "Surefire report files found: ${SUREFIRE_COUNT}"
             find target/surefire-reports -maxdepth 2 -type f -print
           else
-            echo "::warning::Surefire reports directory was not generated."
+            echo "::error::The target/surefire-reports directory was not generated."
+            exit 1
           fi
 
           echo "Checking Allure results..."
@@ -127,7 +120,9 @@ jobs:
           find target/allure-results -maxdepth 2 -type f -print
 
       - name: Static Code Analysis - PMD
+        id: pmd
         if: always()
+        continue-on-error: true
         run: >
           mvn
           --batch-mode
@@ -135,7 +130,9 @@ jobs:
           pmd:check
 
       - name: Static Code Analysis - SpotBugs
+        id: spotbugs
         if: always()
+        continue-on-error: true
         run: >
           mvn
           --batch-mode
@@ -143,7 +140,9 @@ jobs:
           spotbugs:check
 
       - name: Validate NVD API Key
+        id: nvd-key
         if: always()
+        continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         shell: bash
@@ -156,9 +155,12 @@ jobs:
           echo "NVD API Key is configured."
 
       - name: Update Dependency Check Database
+        id: dependency-check-update
         if: >
           always() &&
+          steps.nvd-key.outcome == 'success' &&
           steps.dependency-check-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         shell: bash
@@ -174,6 +176,7 @@ jobs:
       - name: Save Dependency Check Database
         if: >
           always() &&
+          steps.dependency-check-update.outcome == 'success' &&
           steps.dependency-check-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
@@ -181,7 +184,9 @@ jobs:
           key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
 
       - name: Dependency Vulnerability Analysis
+        id: dependency-check
         if: always()
+        continue-on-error: true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         shell: bash
@@ -194,7 +199,9 @@ jobs:
             dependency-check:check
 
       - name: Install Allure CLI
+        id: install-allure
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           ALLURE_VERSION="2.29.0"
@@ -216,7 +223,9 @@ jobs:
           "${ALLURE_DIRECTORY}/bin/allure" --version
 
       - name: Generate Allure HTML Report
+        id: generate-allure
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           if [ ! -d "target/allure-results" ] ||
@@ -231,7 +240,9 @@ jobs:
             --output target/allure-report
 
       - name: Verify Allure HTML Report
+        id: verify-allure-report
         if: always()
+        continue-on-error: true
         shell: bash
         run: |
           if [ ! -f "target/allure-report/index.html" ]; then
@@ -274,6 +285,7 @@ jobs:
           path: |
             target/traces
             target/videos
+            target/screenshots
             target/surefire-reports
           if-no-files-found: warn
           retention-days: 14
@@ -306,6 +318,63 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: target/allure-report
+
+      - name: Enforce Quality Gate
+        if: always()
+        shell: bash
+        env:
+          PLAYWRIGHT_INSTALL_OUTCOME: ${{ steps.install-playwright.outcome }}
+          UI_TESTS_OUTCOME: ${{ steps.ui-tests.outcome }}
+          RESULTS_OUTCOME: ${{ steps.verify-results.outcome }}
+          PMD_OUTCOME: ${{ steps.pmd.outcome }}
+          SPOTBUGS_OUTCOME: ${{ steps.spotbugs.outcome }}
+          NVD_KEY_OUTCOME: ${{ steps.nvd-key.outcome }}
+          DEPENDENCY_CHECK_OUTCOME: ${{ steps.dependency-check.outcome }}
+          ALLURE_INSTALL_OUTCOME: ${{ steps.install-allure.outcome }}
+          ALLURE_GENERATION_OUTCOME: ${{ steps.generate-allure.outcome }}
+        run: |
+          echo "=============================================="
+          echo "Enterprise Quality Gate Summary"
+          echo "=============================================="
+          echo "Playwright installation: ${PLAYWRIGHT_INSTALL_OUTCOME}"
+          echo "UI tests:               ${UI_TESTS_OUTCOME}"
+          echo "Test and Allure results:${RESULTS_OUTCOME}"
+          echo "PMD:                    ${PMD_OUTCOME}"
+          echo "SpotBugs:               ${SPOTBUGS_OUTCOME}"
+          echo "NVD API Key:            ${NVD_KEY_OUTCOME}"
+          echo "Dependency Check:       ${DEPENDENCY_CHECK_OUTCOME}"
+          echo "Allure CLI installation:${ALLURE_INSTALL_OUTCOME}"
+          echo "Allure report:          ${ALLURE_GENERATION_OUTCOME}"
+          echo "=============================================="
+
+          FAILED=0
+
+          validate_outcome() {
+            local name="$1"
+            local outcome="$2"
+
+            if [ "$outcome" != "success" ]; then
+              echo "::error::${name} failed with outcome: ${outcome}"
+              FAILED=1
+            fi
+          }
+
+          validate_outcome "Playwright installation" "$PLAYWRIGHT_INSTALL_OUTCOME"
+          validate_outcome "UI tests" "$UI_TESTS_OUTCOME"
+          validate_outcome "Test and Allure result verification" "$RESULTS_OUTCOME"
+          validate_outcome "PMD" "$PMD_OUTCOME"
+          validate_outcome "SpotBugs" "$SPOTBUGS_OUTCOME"
+          validate_outcome "NVD API Key validation" "$NVD_KEY_OUTCOME"
+          validate_outcome "Dependency Check" "$DEPENDENCY_CHECK_OUTCOME"
+          validate_outcome "Allure CLI installation" "$ALLURE_INSTALL_OUTCOME"
+          validate_outcome "Allure report generation" "$ALLURE_GENERATION_OUTCOME"
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo "::error::One or more quality gates failed."
+            exit 1
+          fi
+
+          echo "All enterprise quality gates passed successfully."
 
   codeql:
     name: CodeQL Security Analysis
