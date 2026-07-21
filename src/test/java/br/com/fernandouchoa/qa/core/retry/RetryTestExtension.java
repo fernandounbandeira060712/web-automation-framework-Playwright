@@ -265,34 +265,48 @@ public final class RetryTestExtension
         private boolean beginAttempt(int attempt) {
             lock.lock();
 
-            while (!finished && attempt != nextAttempt) {
-                turnChanged.awaitUninterruptibly();
-            }
+            try {
+                while (!finished && attempt != nextAttempt) {
+                    turnChanged.awaitUninterruptibly();
+                }
 
-            if (finished) {
+                return !finished;
+            } finally {
                 lock.unlock();
-                return false;
             }
-
-            return true;
         }
 
         private void completeSuccessfulAttempt() {
-            finished = true;
-            turnChanged.signalAll();
-            lock.unlock();
+            lock.lock();
+
+            try {
+                finished = true;
+                turnChanged.signalAll();
+            } finally {
+                lock.unlock();
+            }
         }
 
         private void completeTerminalAttempt() {
-            finished = true;
-            turnChanged.signalAll();
-            lock.unlock();
+            lock.lock();
+
+            try {
+                finished = true;
+                turnChanged.signalAll();
+            } finally {
+                lock.unlock();
+            }
         }
 
         private void completeFailedAttempt(int attempt) {
-            nextAttempt = attempt + 1;
-            turnChanged.signalAll();
-            lock.unlock();
+            lock.lock();
+
+            try {
+                nextAttempt = attempt + 1;
+                turnChanged.signalAll();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 }
