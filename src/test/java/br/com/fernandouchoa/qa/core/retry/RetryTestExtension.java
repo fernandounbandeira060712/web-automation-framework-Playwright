@@ -23,7 +23,10 @@ import io.qameta.allure.Allure;
 
 /**
  * Implementa tentativas sequenciais para métodos anotados com {@link RetryTest}.
- * As tentativas permanecem serializadas mesmo quando a suíte executa em paralelo.
+ *
+ * <p>As tentativas permanecem serializadas mesmo quando a suíte executa em
+ * paralelo. Todas as tentativas ativas compartilham a mesma identidade no
+ * Allure, permitindo que o relatório as agrupe na aba "Tentativas repetidas".
  */
 public final class RetryTestExtension
         implements TestTemplateInvocationContextProvider {
@@ -31,7 +34,10 @@ public final class RetryTestExtension
     @Override
     public boolean supportsTestTemplate(ExtensionContext context) {
         return context.getTestMethod()
-                .filter(method -> AnnotationSupport.isAnnotated(method, RetryTest.class))
+                .filter(method -> AnnotationSupport.isAnnotated(
+                        method,
+                        RetryTest.class
+                ))
                 .isPresent();
     }
 
@@ -54,13 +60,19 @@ public final class RetryTestExtension
         }
 
         RetryState state = new RetryState();
-        String displayName = retryTest.name().isBlank()
+
+        String reportName = retryTest.name().isBlank()
                 ? testMethod.getName()
                 : retryTest.name();
 
+        String stableFullName = buildStableFullName(testMethod);
+        String stableIdentifier = buildStableIdentifier(testMethod);
+
         return IntStream.rangeClosed(1, maxAttempts)
                 .mapToObj(attempt -> createInvocationContext(
-                        displayName,
+                        reportName,
+                        stableFullName,
+                        stableIdentifier,
                         attempt,
                         maxAttempts,
                         state
@@ -68,7 +80,9 @@ public final class RetryTestExtension
     }
 
     private TestTemplateInvocationContext createInvocationContext(
-            String displayName,
+            String reportName,
+            String stableFullName,
+            String stableIdentifier,
             int attempt,
             int maxAttempts,
             RetryState state) {
@@ -79,7 +93,7 @@ public final class RetryTestExtension
             public String getDisplayName(int invocationIndex) {
                 return String.format(
                         "%s [tentativa %d de %d]",
-                        displayName,
+                        reportName,
                         attempt,
                         maxAttempts
                 );
@@ -89,6 +103,9 @@ public final class RetryTestExtension
             public List<Extension> getAdditionalExtensions() {
                 return List.of(
                         new RetryAttemptExtension(
+                                reportName,
+                                stableFullName,
+                                stableIdentifier,
                                 attempt,
                                 maxAttempts,
                                 state
@@ -98,6 +115,16 @@ public final class RetryTestExtension
         };
     }
 
+    private static String buildStableFullName(Method testMethod) {
+        return testMethod.getDeclaringClass().getName()
+                + "."
+                + testMethod.getName();
+    }
+
+    private static String buildStableIdentifier(Method testMethod) {
+        return testMethod.toGenericString();
+    }
+
     private static final class RetryAttemptExtension
             implements BeforeEachCallback,
             BeforeTestExecutionCallback,
@@ -105,6 +132,9 @@ public final class RetryTestExtension
             LifecycleMethodExecutionExceptionHandler,
             AfterEachCallback {
 
+        private final String reportName;
+        private final String stableFullName;
+        private final String stableIdentifier;
         private final int attempt;
         private final int maxAttempts;
         private final RetryState state;
@@ -114,10 +144,16 @@ public final class RetryTestExtension
         private boolean completed;
 
         private RetryAttemptExtension(
+                String reportName,
+                String stableFullName,
+                String stableIdentifier,
                 int attempt,
                 int maxAttempts,
                 RetryState state) {
 
+            this.reportName = reportName;
+            this.stableFullName = stableFullName;
+            this.stableIdentifier = stableIdentifier;
             this.attempt = attempt;
             this.maxAttempts = maxAttempts;
             this.state = state;
@@ -133,14 +169,19 @@ public final class RetryTestExtension
                 );
             }
 
+            configureStableAllureIdentity();
+
             Allure.parameter(
                     "Tentativa",
-                    attempt + " de " + maxAttempts
+                    attempt + " de " + maxAttempts,
+                    true
             );
         }
 
         @Override
         public void beforeTestExecution(ExtensionContext context) {
+            configureStableAllureIdentity();
+
             if (failure != null) {
                 throw retryAbortedException(failure);
             }
@@ -216,6 +257,15 @@ public final class RetryTestExtension
             }
         }
 
+        private void configureStableAllureIdentity() {
+            Allure.getLifecycle().updateTestCase(testResult -> {
+                testResult.setName(reportName);
+                testResult.setFullName(stableFullName);
+                testResult.setHistoryId(stableIdentifier);
+                testResult.setTestCaseId(stableIdentifier);
+            });
+        }
+
         private boolean isLastAttempt() {
             return attempt >= maxAttempts;
         }
@@ -247,7 +297,8 @@ public final class RetryTestExtension
 
         private TestAbortedException retryAbortedException(Throwable cause) {
             return new TestAbortedException(
-                    "Tentativa " + attempt
+                    "Tentativa "
+                            + attempt
                             + " falhou. Uma nova tentativa será executada.",
                     cause
             );
