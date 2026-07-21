@@ -17,6 +17,9 @@ public final class ProductsLocators {
     public static final String PRODUCT_CARDS =
             ".product-image-wrapper";
 
+    public static final String PRODUCT_NAMES =
+            ".productinfo p";
+
     public static final String CART_MODAL =
             "#cartModal";
 

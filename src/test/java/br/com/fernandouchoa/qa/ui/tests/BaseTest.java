@@ -8,7 +8,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Tracing;
 import com.microsoft.playwright.Video;
@@ -25,7 +28,10 @@ import br.com.fernandouchoa.qa.ui.pages.ProductsPage;
 import br.com.fernandouchoa.qa.utils.AllureUtils;
 
 @ExtendWith(AllureReportExtension.class)
-public class BaseTest {
+public abstract class BaseTest {
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(BaseTest.class);
 
     protected Page page;
 
@@ -36,16 +42,8 @@ public class BaseTest {
     protected CheckoutPage checkoutPage;
     protected AccountPage accountPage;
 
-    private static boolean cleaned = false;
-
     @BeforeEach
     public void setup() {
-
-        if (!cleaned) {
-            AllureUtils.cleanResults();
-            cleaned = true;
-        }
-
         PlaywrightFactory.createInstance();
         page = PlaywrightFactory.getPage();
 
@@ -55,58 +53,87 @@ public class BaseTest {
 
     @AfterEach
     public void tearDown(TestInfo testInfo) {
+        Video video = getVideoSafely();
+        Path tracePath = buildTracePath(testInfo);
 
-        String testName =
-                testInfo.getDisplayName()
-                        .replace("()", "")
-                        .replaceAll("[^a-zA-Z0-9-_]", "_");
+        stopTraceAndAttach(tracePath);
 
-        Path tracePath =
-                Paths.get("target", "traces", testName + ".zip");
+        try {
+            PlaywrightFactory.closeInstance();
+        } finally {
+            attachVideo(video);
+            clearPageObjects();
+        }
+    }
 
-        Video video =
-                page != null ? page.video() : null;
+    private Path buildTracePath(TestInfo testInfo) {
+        String testName = testInfo.getDisplayName()
+                .replace("()", "")
+                .replaceAll("[^a-zA-Z0-9-_]", "_");
 
-        if (page != null) {
-            AllureUtils.attachScreenshot(
-                    page,
-                    "Captura de tela - " + testInfo.getDisplayName()
+        return Paths.get("target", "traces", testName + ".zip");
+    }
+
+    private Video getVideoSafely() {
+        try {
+            return page != null && !page.isClosed()
+                    ? page.video()
+                    : null;
+        } catch (RuntimeException exception) {
+            LOGGER.warn("Não foi possível obter o vídeo da execução.", exception);
+            return null;
+        }
+    }
+
+    private void stopTraceAndAttach(Path tracePath) {
+        BrowserContext context = DriverManager.getContext();
+
+        if (context == null) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(tracePath.getParent());
+
+            context.tracing().stop(
+                    new Tracing.StopOptions().setPath(tracePath)
             );
+
+            AllureUtils.attachFile(
+                    "Trace Playwright",
+                    tracePath,
+                    "application/zip",
+                    ".zip"
+            );
+        } catch (Exception exception) {
+            LOGGER.warn("Não foi possível salvar o trace do Playwright.", exception);
+        }
+    }
+
+    private void attachVideo(Video video) {
+        if (video == null) {
+            return;
         }
 
         try {
-            if (DriverManager.getContext() != null) {
-
-                Files.createDirectories(tracePath.getParent());
-
-                DriverManager.getContext()
-                        .tracing()
-                        .stop(
-                                new Tracing.StopOptions()
-                                        .setPath(tracePath)
-                        );
-
-                AllureUtils.attachFile(
-                        "Trace Playwright",
-                        tracePath,
-                        "application/zip"
-                );
-            }
-        } catch (Exception ignored) {
+            AllureUtils.attachFile(
+                    "Vídeo da execução",
+                    video.path(),
+                    "video/webm",
+                    ".webm"
+            );
+        } catch (Exception exception) {
+            LOGGER.warn("Não foi possível anexar o vídeo da execução.", exception);
         }
+    }
 
-        PlaywrightFactory.closeInstance();
-
-        try {
-            if (video != null) {
-                AllureUtils.attachFile(
-                        "Vídeo da execução",
-                        video.path(),
-                        "video/webm",
-                        ".webm"
-                );
-            }
-        } catch (Exception ignored) {
-        }
+    private void clearPageObjects() {
+        page = null;
+        homePage = null;
+        loginPage = null;
+        productsPage = null;
+        cartPage = null;
+        checkoutPage = null;
+        accountPage = null;
     }
 }
