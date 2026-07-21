@@ -42,6 +42,14 @@ Arquitetura corporativa para automação de testes com foco em qualidade, escala
 
 **Execução paralela • Retry automático • Evidências completas • CI/CD • Segurança • Arquitetura em camadas**
 
+<p align="center">
+  <img
+    src="docs/images/gifs/execution-checkout.gif"
+    alt="Execução automatizada do fluxo de checkout com Playwright"
+    width="100%"
+  />
+</p>
+
 </div>
 
 ---
@@ -57,7 +65,7 @@ Arquitetura corporativa para automação de testes com foco em qualidade, escala
 | 🛡️ Segurança | CodeQL + Dependency Check |
 | 🔍 Qualidade | PMD + SpotBugs |
 | 🚀 Execução Paralela | Sim |
-| 🌿 Versionamento | Git
+| 🌿 Versionamento | Git + fluxo `dev` → Pull Request → `main` |
 
 ---
 
@@ -85,6 +93,7 @@ Arquitetura corporativa para automação de testes com foco em qualidade, escala
 | Item                    | Status |
 | ----------------------- | :----: |
 | Retry Automático        | ✅ |
+| Agrupamento de tentativas no Allure | ✅ |
 | Screenshots Automáticos | ✅ |
 | Vídeos da Execução      | ✅ |
 | Playwright Trace        | ✅ |
@@ -312,7 +321,7 @@ Antes de executar o projeto, certifique-se de possuir instalado:
 ## Clonar o repositório
 
 ```bash
-git clone https://github.com/fernandounbandeira060712/web-automation-framework-playwright.git
+git clone https://github.com/fernandounbandeira060712/web-automation-framework-Playwright.git
 ```
 
 ---
@@ -328,7 +337,23 @@ cd web-automation-framework-playwright
 ## Instalar as dependências
 
 ```bash
-mvn clean install
+mvn clean install -DskipTests
+```
+
+---
+
+
+## Configurar as credenciais de teste
+
+Os cenários autenticados usam variáveis de ambiente. As credenciais não são versionadas no repositório.
+
+### PowerShell
+
+```powershell
+$env:TEST_USER_EMAIL = Read-Host "E-mail do usuário de teste"
+
+$senhaSegura = Read-Host "Senha do usuário de teste" -AsSecureString
+$env:TEST_USER_PASSWORD = [System.Net.NetworkCredential]::new("", $senhaSegura).Password
 ```
 
 ---
@@ -354,7 +379,7 @@ mvn test -Dtest=NomeDaClasseDeTeste
 ## Gerar o Allure Report
 
 ```bash
-allure serve target/allure-results
+mvn allure:serve
 ```
 
 ---
@@ -377,6 +402,42 @@ Essa abordagem permite que toda falha seja analisada com riqueza de detalhes, re
 
 Esses artefatos permitem identificar rapidamente falhas, reproduzir cenários e facilitar a investigação de problemas durante a execução automatizada.
 
+<p align="center">
+  <img
+    src="docs/images/evidences/allure-overview-11-tests-100-percent.png"
+    alt="Allure Report com 11 testes e 100% de sucesso"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="docs/images/evidences/allure-suite-steps-trace-video.png"
+    alt="Detalhes da suíte com steps, trace e vídeo"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="docs/images/evidences/allure-graphs-status-severity-duration.png"
+    alt="Gráficos do Allure Report"
+    width="100%"
+  />
+</p>
+
+## 🔁 Retry com rastreabilidade
+
+O retry foi implementado como uma extensão customizada do JUnit 5. As tentativas são executadas sequencialmente, compartilham a mesma identidade no Allure e são agrupadas na aba **Tentativas repetidas**.
+
+<p align="center">
+  <img
+    src="docs/images/evidences/allure-retry-repeated-attempts.png"
+    alt="Tentativas de retry agrupadas no Allure Report"
+    width="100%"
+  />
+</p>
+
 ---
 
 # ⚙️ Pipeline CI/CD
@@ -395,6 +456,38 @@ A pipeline executa:
 - ✅ CodeQL Analysis
 
 Esse fluxo garante que cada alteração passe por validações de qualidade, segurança e execução automatizada antes de ser considerada estável.
+
+<p align="center">
+  <img
+    src="docs/images/evidences/github-actions-pipeline-summary.png"
+    alt="Resumo da pipeline no GitHub Actions"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="docs/images/evidences/github-actions-quality-gates-steps.png"
+    alt="Quality Gates executados pela pipeline"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="docs/images/evidences/github-actions-codeql-security-analysis.png"
+    alt="Análise de segurança com CodeQL"
+    width="100%"
+  />
+</p>
+
+<p align="center">
+  <img
+    src="docs/images/evidences/github-actions-deploy-allure-report.png"
+    alt="Publicação do Allure Report"
+    width="100%"
+  />
+</p>
 
 ---
 
@@ -423,7 +516,7 @@ Desenvolvimento (dev)
         ├── SpotBugs
         ├── Dependency Review
         ├── OWASP Dependency Check
-        ├── CodeQLCodeQL Analysis
+        ├── CodeQL Analysis
         ├── Allure Report
         └── Playwright Artifacts
         │
@@ -439,6 +532,14 @@ Main
         ▼
 Publish Allure Report
 ```
+
+<p align="center">
+  <img
+    src="docs/images/evidences/pull-request-merged-successfully.png"
+    alt="Pull Request aprovado e integrado à main"
+    width="100%"
+  />
+</p>
 
 ### Automações disponíveis
 
@@ -473,6 +574,16 @@ Além da automação de testes, o framework incorpora ferramentas de qualidade e
 | GitHub Actions | Integração contínua |
 
 Essas verificações são executadas automaticamente durante a pipeline, contribuindo para manter elevados padrões de qualidade e segurança.
+
+As credenciais e tokens utilizados pela pipeline são mantidos como **Repository Secrets** no GitHub Actions. Os valores permanecem protegidos e não são versionados no código-fonte.
+
+<p align="center">
+  <img
+    src="docs/images/evidences/github-actions-repository-secrets.png"
+    alt="Secrets protegidos configurados no GitHub Actions"
+    width="100%"
+  />
+</p>
 
 ---
 
