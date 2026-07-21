@@ -1,7 +1,14 @@
 target/
+.allure/
 allure-results/
+
 .settings/
 .classpath
 .project
-.allure/
-allure-results/
+.idea/
+*.iml
+.vscode/
+
+.env
+.env.*
+!.env.example

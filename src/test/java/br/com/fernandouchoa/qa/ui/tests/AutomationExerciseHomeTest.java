@@ -20,12 +20,15 @@ import io.qameta.allure.Story;
 @Owner("Fernando Uchoa")
 public class AutomationExerciseHomeTest extends BaseTest {
 
+    private static final String DEFAULT_PRODUCT_ID = "1";
+    private static final String SEARCH_PRODUCT_NAME = "Blue Top";
+
     @Regression
     @Feature("Login")
     @Story("Login com usuário inválido")
     @Severity(SeverityLevel.NORMAL)
     @Description("Valida a mensagem apresentada quando o usuário informa credenciais inválidas.")
-    public void deveRealizarLogin() {
+    public void deveExibirMensagemAoRealizarLoginComCredenciaisInvalidas() {
         loginPage = homePage.header().goToLoginPage();
 
         User invalidUser = TestDataManager.getUser("invalidUser");
@@ -80,9 +83,11 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Feature("Produtos")
     @Story("Pesquisa de produtos")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Valida que a página de produtos carrega e exibe produtos disponíveis.")
+    @Description("Valida que a pesquisa retorna o produto informado.")
     public void devePesquisarProdutoComSucesso() {
-        productsPage = homePage.header().goToProductsPage();
+        productsPage = homePage.header()
+                .goToProductsPage()
+                .searchProduct(SEARCH_PRODUCT_NAME);
 
         AssertUtils.assertTrue(
                 productsPage.isLoaded(),
@@ -91,7 +96,12 @@ public class AutomationExerciseHomeTest extends BaseTest {
 
         AssertUtils.assertTrue(
                 productsPage.hasProductsDisplayed(),
-                "Nenhum produto foi exibido."
+                "Nenhum produto foi exibido após a pesquisa."
+        );
+
+        AssertUtils.assertTrue(
+                productsPage.hasProductNamed(SEARCH_PRODUCT_NAME),
+                "O produto pesquisado não foi encontrado nos resultados."
         );
     }
 
@@ -115,7 +125,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
     public void deveVisualizarDetalhesDoProdutoComSucesso() {
         ProductDetailsPage productDetailsPage = homePage.header()
                 .goToProductsPage()
-                .viewProductById("1");
+                .viewProductById(DEFAULT_PRODUCT_ID);
 
         AssertUtils.assertTrue(
                 productDetailsPage.isLoaded(),
@@ -141,7 +151,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
     public void deveAdicionarProdutoAoCarrinho() {
         CartModalComponent cartModal = homePage.header()
                 .goToProductsPage()
-                .addProductToCartById("1");
+                .addProductToCartById(DEFAULT_PRODUCT_ID);
 
         AssertUtils.assertTrue(
                 cartModal.isDisplayed(),
@@ -157,7 +167,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
     public void deveVisualizarCarrinhoComProdutoAdicionado() {
         cartPage = homePage.header()
                 .goToProductsPage()
-                .addProductToCartById("1")
+                .addProductToCartById(DEFAULT_PRODUCT_ID)
                 .viewCart();
 
         AssertUtils.assertTrue(
@@ -175,30 +185,11 @@ public class AutomationExerciseHomeTest extends BaseTest {
     @Feature("Carrinho")
     @Story("Remover produto")
     @Severity(SeverityLevel.CRITICAL)
-    @Description("Valida que um produto pode ser removido do carrinho.")
-    public void deveRemoverProdutoDoCarrinho() {
-        cartPage = homePage.header()
-                .goToProductsPage()
-                .addProductToCartById("1")
-                .viewCart();
-
-        cartPage.removeFirstProduct();
-
-        AssertUtils.assertTrue(
-                cartPage.isEmpty(),
-                "Carrinho não está vazio."
-        );
-    }
-
-    @Regression
-    @Feature("Carrinho")
-    @Story("Carrinho vazio")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("Valida que o carrinho fica vazio após remover o produto.")
+    @Description("Valida que o carrinho fica vazio após a remoção do produto.")
     public void deveRemoverProdutoDoCarrinhoComSucesso() {
         cartPage = homePage.header()
                 .goToProductsPage()
-                .addProductToCartById("1")
+                .addProductToCartById(DEFAULT_PRODUCT_ID)
                 .viewCart();
 
         AssertUtils.assertTrue(
@@ -228,7 +219,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
 
         checkoutPage = homePage.header()
                 .goToProductsPage()
-                .addProductToCartById("1")
+                .addProductToCartById(DEFAULT_PRODUCT_ID)
                 .viewCart()
                 .proceedToCheckout();
 
@@ -252,7 +243,7 @@ public class AutomationExerciseHomeTest extends BaseTest {
 
         checkoutPage = homePage.header()
                 .goToProductsPage()
-                .addProductToCartById("1")
+                .addProductToCartById(DEFAULT_PRODUCT_ID)
                 .viewCart()
                 .proceedToCheckout();
 

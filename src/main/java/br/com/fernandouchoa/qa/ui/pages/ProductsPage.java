@@ -15,6 +15,7 @@ public class ProductsPage extends BasePage {
     private final Locator searchInput;
     private final Locator searchButton;
     private final Locator productCards;
+    private final Locator productNames;
 
     public ProductsPage(Page page) {
         super(page);
@@ -23,6 +24,7 @@ public class ProductsPage extends BasePage {
         this.searchInput = locator(ProductsLocators.SEARCH_INPUT);
         this.searchButton = locator(ProductsLocators.SEARCH_BUTTON);
         this.productCards = locator(ProductsLocators.PRODUCT_CARDS);
+        this.productNames = locator(ProductsLocators.PRODUCT_NAMES);
     }
 
     @Step("Validar se a página de produtos foi carregada")
@@ -30,7 +32,7 @@ public class ProductsPage extends BasePage {
         return isVisible(productsSection);
     }
 
-    @Step("Pesquisar produto")
+    @Step("Pesquisar o produto: {productName}")
     public ProductsPage searchProduct(String productName) {
         Allure.parameter("Produto pesquisado", productName);
 
@@ -44,6 +46,14 @@ public class ProductsPage extends BasePage {
     @Step("Validar se existem produtos exibidos")
     public boolean hasProductsDisplayed() {
         return count(productCards) > 0;
+    }
+
+    @Step("Validar se o produto pesquisado foi exibido: {expectedName}")
+    public boolean hasProductNamed(String expectedName) {
+        return productNames.allTextContents()
+                .stream()
+                .map(String::trim)
+                .anyMatch(name -> name.equalsIgnoreCase(expectedName));
     }
 
     @Step("Capturar quantidade de produtos exibidos")
