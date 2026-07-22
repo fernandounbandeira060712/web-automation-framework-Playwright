@@ -19,8 +19,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  configuration-gate:
+    name: Configuration Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate Project Configuration
+        shell: pwsh
+        env:
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          ./scripts/quality-gates/validate-configuration.ps1 `
+            -ProjectRoot . `
+            -Environment dev `
+            -RequireSecrets
+
   quality-gate:
     name: Tests and Quality Gates
+    needs: configuration-gate
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -142,26 +164,10 @@ jobs:
           --no-transfer-progress
           spotbugs:check
 
-      - name: Validate NVD API Key
-        id: nvd-key
-        if: always()
-        continue-on-error: true
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        shell: bash
-        run: |
-          if [ -z "$NVD_API_KEY" ]; then
-            echo "::error::Repository secret NVD_API_KEY is not configured."
-            exit 1
-          fi
-
-          echo "NVD API Key is configured."
-
       - name: Update Dependency Check Database
         id: dependency-check-update
         if: >
           always() &&
-          steps.nvd-key.outcome == 'success' &&
           steps.dependency-check-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         env:
@@ -331,7 +337,6 @@ jobs:
           RESULTS_OUTCOME: ${{ steps.verify-results.outcome }}
           PMD_OUTCOME: ${{ steps.pmd.outcome }}
           SPOTBUGS_OUTCOME: ${{ steps.spotbugs.outcome }}
-          NVD_KEY_OUTCOME: ${{ steps.nvd-key.outcome }}
           DEPENDENCY_CHECK_OUTCOME: ${{ steps.dependency-check.outcome }}
           ALLURE_INSTALL_OUTCOME: ${{ steps.install-allure.outcome }}
           ALLURE_GENERATION_OUTCOME: ${{ steps.generate-allure.outcome }}
@@ -344,7 +349,6 @@ jobs:
           echo "Test and Allure results:${RESULTS_OUTCOME}"
           echo "PMD:                    ${PMD_OUTCOME}"
           echo "SpotBugs:               ${SPOTBUGS_OUTCOME}"
-          echo "NVD API Key:            ${NVD_KEY_OUTCOME}"
           echo "Dependency Check:       ${DEPENDENCY_CHECK_OUTCOME}"
           echo "Allure CLI installation:${ALLURE_INSTALL_OUTCOME}"
           echo "Allure report:          ${ALLURE_GENERATION_OUTCOME}"
@@ -367,7 +371,6 @@ jobs:
           validate_outcome "Test and Allure result verification" "$RESULTS_OUTCOME"
           validate_outcome "PMD" "$PMD_OUTCOME"
           validate_outcome "SpotBugs" "$SPOTBUGS_OUTCOME"
-          validate_outcome "NVD API Key validation" "$NVD_KEY_OUTCOME"
           validate_outcome "Dependency Check" "$DEPENDENCY_CHECK_OUTCOME"
           validate_outcome "Allure CLI installation" "$ALLURE_INSTALL_OUTCOME"
           validate_outcome "Allure report generation" "$ALLURE_GENERATION_OUTCOME"
@@ -381,6 +384,7 @@ jobs:
 
   codeql:
     name: CodeQL Security Analysis
+    needs: configuration-gate
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
