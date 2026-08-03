@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -43,7 +43,7 @@ jobs:
 
       - name: Restore Dependency Check Database
         id: dependency-check-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
           key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
@@ -181,7 +181,7 @@ jobs:
           always() &&
           steps.dependency-check-update.outcome == 'success' &&
           steps.dependency-check-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
           key: ${{ runner.os }}-dependency-check-v2-${{ steps.dependency-cache-key.outputs.week }}-${{ hashFiles('pom.xml') }}
@@ -264,7 +264,7 @@ jobs:
 
       - name: Upload Allure Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results-${{ github.run_number }}
           path: target/allure-results
@@ -273,7 +273,7 @@ jobs:
 
       - name: Upload Allure HTML Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-html-report-${{ github.run_number }}
           path: target/allure-report
@@ -282,7 +282,7 @@ jobs:
 
       - name: Upload Playwright Evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-evidence-${{ github.run_number }}
           path: |
@@ -295,7 +295,7 @@ jobs:
 
       - name: Upload Dependency Check Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-check-report-${{ github.run_number }}
           path: target/dependency-check
@@ -309,7 +309,7 @@ jobs:
           (github.event_name == 'push' ||
           github.event_name == 'workflow_dispatch') &&
           hashFiles('target/allure-report/index.html') != ''
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload GitHub Pages Artifact
         if: >
@@ -318,7 +318,7 @@ jobs:
           (github.event_name == 'push' ||
           github.event_name == 'workflow_dispatch') &&
           hashFiles('target/allure-report/index.html') != ''
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: target/allure-report
 
@@ -391,17 +391,17 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
           cache: maven
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.4
         with:
           languages: java-kotlin
           queries: security-extended
@@ -416,7 +416,7 @@ jobs:
           test-compile
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.4
         with:
           category: "/language:java-kotlin"
 
@@ -450,4 +450,4 @@ jobs:
     steps:
       - name: Deploy Allure Report to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
